@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Income - MyHub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-cash text-success me-2"></i>Income</h1>
+    <a href="{{ url_for('income_add') }}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i> Add Income</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted">Total Income</span>
+            <span class="h4 text-success mb-0">${{ "%.2f"|format(total) }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if incomes %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Source</th>
+                        <th>Date</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for income in incomes %}
+                    <tr>
+                        <td>
+                            <strong>{{ income.source }}</strong>
+                            {% if income.notes %}<br><small class="text-muted">{{ income.notes }}</small>{% endif %}
+                        </td>
+                        <td>{{ income.date.strftime('%b %d, %Y') }}</td>
+                        <td class="text-end text-success fw-bold">${{ "%.2f"|format(income.amount) }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('income_edit', id=income.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+                            <form action="{{ url_for('income_delete', id=income.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this income?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-cash text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-3 mb-0">No income recorded yet</p>
+            <a href="{{ url_for('income_add') }}" class="btn btn-success mt-3">Add Your First Income</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

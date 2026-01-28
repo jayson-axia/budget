@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Expenses - MyHub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-cart text-danger me-2"></i>Expenses</h1>
+    <a href="{{ url_for('expense_add') }}" class="btn btn-danger"><i class="bi bi-plus-lg me-1"></i> Add Expense</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted">Total Expenses</span>
+            <span class="h4 text-danger mb-0">${{ "%.2f"|format(total) }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if expenses %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                        <th class="text-end">Amount</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr>
+                        <td>
+                            <strong>{{ expense.description }}</strong>
+                            {% if expense.notes %}<br><small class="text-muted">{{ expense.notes }}</small>{% endif %}
+                        </td>
+                        <td><span class="badge bg-secondary">{{ expense.category }}</span></td>
+                        <td>{{ expense.date.strftime('%b %d, %Y') }}</td>
+                        <td class="text-end text-danger fw-bold">${{ "%.2f"|format(expense.amount) }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('expense_edit', id=expense.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+                            <form action="{{ url_for('expense_delete', id=expense.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this expense?')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-cart text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-3 mb-0">No expenses recorded yet</p>
+            <a href="{{ url_for('expense_add') }}" class="btn btn-danger mt-3">Add Your First Expense</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

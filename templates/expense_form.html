@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if expense else 'Add' }} Expense - MyHub{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('expense_list') }}" class="text-decoration-none"><i class="bi bi-arrow-left me-1"></i> Back to Expenses</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">{{ 'Edit' if expense else 'Add' }} Expense</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="description" class="form-label">Description *</label>
+                <input type="text" class="form-control" id="description" name="description" value="{{ expense.description if expense else '' }}" required placeholder="e.g., Grocery shopping, Electric bill">
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="category" class="form-label">Category *</label>
+                    <select class="form-select" id="category" name="category" required>
+                        <option value="">Select category...</option>
+                        {% set categories = ['Food', 'Transportation', 'Utilities', 'Entertainment', 'Shopping', 'Healthcare', 'Education', 'Housing', 'Insurance', 'Subscriptions', 'Other'] %}
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {{ 'selected' if expense and expense.category == cat else '' }}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="amount" class="form-label">Amount *</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" value="{{ expense.amount if expense else '' }}" required placeholder="0.00">
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="date" class="form-label">Date *</label>
+                <input type="date" class="form-control" id="date" name="date" value="{{ expense.date.strftime('%Y-%m-%d') if expense else '' }}" required>
+            </div>
+            <div class="mb-4">
+                <label for="notes" class="form-label">Notes</label>
+                <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional notes">{{ expense.notes if expense else '' }}</textarea>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg me-1"></i> {{ 'Update' if expense else 'Add' }} Expense</button>
+                <a href="{{ url_for('expense_list') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    if (!document.getElementById('date').value) {
+        document.getElementById('date').valueAsDate = new Date();
+    }
+</script>
+{% endblock %}

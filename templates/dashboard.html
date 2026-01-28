@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - MyHub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0 fw-bold">Dashboard</h1>
+    <span class="text-muted">Welcome, {{ current_user.username }}!</span>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="stat-card income">
+            <p><i class="bi bi-arrow-up-circle me-1"></i> Total Income</p>
+            <h3>${{ "%.2f"|format(total_income) }}</h3>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="stat-card expense">
+            <p><i class="bi bi-arrow-down-circle me-1"></i> Total Expenses</p>
+            <h3>${{ "%.2f"|format(total_expenses) }}</h3>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="stat-card balance">
+            <p><i class="bi bi-wallet me-1"></i> Balance</p>
+            <h3>${{ "%.2f"|format(balance) }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-cash text-success me-2"></i>Recent Income</span>
+                <a href="{{ url_for('income_add') }}" class="btn btn-sm btn-success"><i class="bi bi-plus"></i> Add</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_income %}
+                <ul class="list-group list-group-flush">
+                    {% for income in recent_income %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ income.source }}</strong>
+                            <br><small class="text-muted">{{ income.date.strftime('%b %d, %Y') }}</small>
+                        </div>
+                        <span class="badge bg-success fs-6">${{ "%.2f"|format(income.amount) }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-center text-muted py-4 mb-0">No income recorded yet</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('income_list') }}" class="text-primary text-decoration-none">View all income <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-cart text-danger me-2"></i>Recent Expenses</span>
+                <a href="{{ url_for('expense_add') }}" class="btn btn-sm btn-danger"><i class="bi bi-plus"></i> Add</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_expenses %}
+                <ul class="list-group list-group-flush">
+                    {% for expense in recent_expenses %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ expense.description }}</strong>
+                            <br><small class="text-muted">{{ expense.category }} - {{ expense.date.strftime('%b %d, %Y') }}</small>
+                        </div>
+                        <span class="badge bg-danger fs-6">${{ "%.2f"|format(expense.amount) }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-center text-muted py-4 mb-0">No expenses recorded yet</p>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{{ url_for('expense_list') }}" class="text-primary text-decoration-none">View all expenses <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-key text-primary" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">Credentials</h5>
+                <p class="text-muted mb-3">Store your passwords securely</p>
+                <a href="{{ url_for('credential_list') }}" class="btn btn-outline-primary">Manage Credentials</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-link-45deg text-primary" style="font-size: 2rem;"></i>
+                <h5 class="mt-2">Links</h5>
+                <p class="text-muted mb-3">Save your important links</p>
+                <a href="{{ url_for('link_list') }}" class="btn btn-outline-primary">Manage Links</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
