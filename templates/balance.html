@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Banks - BudgetQuest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-bank me-2" style="color: var(--neon-purple);"></i>Bank Accounts</h1>
+    <a href="{{ url_for('balance_add') }}" class="btn btn-game"><i class="bi bi-plus-lg me-1"></i> Add Bank</a>
+</div>
+
+<!-- Total Balance Card -->
+<div class="stat-box bank mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <div class="stat-label"><i class="bi bi-piggy-bank me-1"></i> Total Balance</div>
+            <h3 class="amount">${{ "%.2f"|format(total) }}</h3>
+        </div>
+        <div class="text-end">
+            <span class="text-muted">{{ accounts|length }} account{{ 's' if accounts|length != 1 }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Bank Accounts Grid -->
+<div class="row g-3">
+    {% if accounts %}
+        {% for account in accounts %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="game-card h-100">
+                <div class="game-card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: {{ account.color }}20; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-{{ account.icon }}" style="color: {{ account.color }}; font-size: 1.25rem;"></i>
+                            </div>
+                            <div>
+                                <strong>{{ account.name }}</strong>
+                                {% if account.notes %}
+                                <br><small class="text-muted">{{ account.notes[:30] }}{% if account.notes|length > 30 %}...{% endif %}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-game" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('balance_edit', id=account.id) }}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+                                <li>
+                                    <form action="{{ url_for('balance_delete', id=account.id) }}" method="POST" onsubmit="return confirm('Delete this bank account?')">
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Delete</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="amount" style="font-size: 1.5rem; color: {{ account.color }};">${{ "%.2f"|format(account.balance) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="game-card">
+            <div class="empty-state">
+                <i class="bi bi-bank"></i>
+                <p class="text-muted mt-3">No bank accounts yet</p>
+                <a href="{{ url_for('balance_add') }}" class="btn btn-game mt-2">Add Your First Bank</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

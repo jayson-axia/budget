@@ -56,21 +56,46 @@ class User(UserMixin, db.Model):
     expenses = db.relationship('Expense', backref='user', lazy=True, cascade='all, delete-orphan')
     credentials = db.relationship('Credential', backref='user', lazy=True, cascade='all, delete-orphan')
     links = db.relationship('Link', backref='user', lazy=True, cascade='all, delete-orphan')
-    folders = db.relationship('Folder', backref='user', lazy=True, cascade='all, delete-orphan')
+    income_categories = db.relationship('IncomeCategory', backref='user', lazy=True, cascade='all, delete-orphan')
+    expense_categories = db.relationship('ExpenseCategory', backref='user', lazy=True, cascade='all, delete-orphan')
     clients = db.relationship('Client', backref='user', lazy=True, cascade='all, delete-orphan')
+    bank_accounts = db.relationship('BankAccount', backref='user', lazy=True, cascade='all, delete-orphan')
     activity_logs = db.relationship('ActivityLog', backref='user', lazy=True, cascade='all, delete-orphan')
     api_keys = db.relationship('ApiKey', backref='user', lazy=True, cascade='all, delete-orphan')
 
 
-class Folder(db.Model):
+class IncomeCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
-    color = db.Column(db.String(7), default='#6366f1')
+    icon = db.Column(db.String(50), default='cash')
+    color = db.Column(db.String(7), default='#22c55e')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    incomes = db.relationship('Income', backref='folder', lazy=True)
-    expenses = db.relationship('Expense', backref='folder', lazy=True)
+    incomes = db.relationship('Income', backref='category', lazy=True)
+
+
+class ExpenseCategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    icon = db.Column(db.String(50), default='cart')
+    color = db.Column(db.String(7), default='#ef4444')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    expenses = db.relationship('Expense', backref='category', lazy=True)
+
+
+class BankAccount(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    balance = db.Column(db.Float, default=0.0)
+    icon = db.Column(db.String(50), default='bank')
+    color = db.Column(db.String(7), default='#6366f1')
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class Client(db.Model):
@@ -111,7 +136,7 @@ class Income(db.Model):
     amount = db.Column(db.Float, nullable=False)
     date = db.Column(db.Date, nullable=False)
     notes = db.Column(db.Text)
-    folder_id = db.Column(db.Integer, db.ForeignKey('folder.id'), nullable=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('income_category.id'), nullable=True)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -119,12 +144,11 @@ class Income(db.Model):
 class Expense(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    category = db.Column(db.String(50), nullable=False)
     description = db.Column(db.String(200), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     date = db.Column(db.Date, nullable=False)
     notes = db.Column(db.Text)
-    folder_id = db.Column(db.Integer, db.ForeignKey('folder.id'), nullable=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('expense_category.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -191,6 +215,34 @@ def require_api_key(f):
     return decorated
 
 
+# Helper to calculate user level based on total transactions
+def get_user_stats(user_id):
+    total_income = db.session.query(db.func.sum(Income.amount)).filter_by(user_id=user_id).scalar() or 0
+    total_expenses = db.session.query(db.func.sum(Expense.amount)).filter_by(user_id=user_id).scalar() or 0
+    total_transactions = Income.query.filter_by(user_id=user_id).count() + Expense.query.filter_by(user_id=user_id).count()
+
+    # Level system: every 10 transactions = 1 level
+    level = (total_transactions // 10) + 1
+    xp = total_transactions % 10
+    xp_needed = 10
+
+    # Savings rate
+    savings_rate = 0
+    if total_income > 0:
+        savings_rate = ((total_income - total_expenses) / total_income) * 100
+
+    return {
+        'level': level,
+        'xp': xp,
+        'xp_needed': xp_needed,
+        'total_transactions': total_transactions,
+        'savings_rate': max(0, savings_rate),
+        'total_income': total_income,
+        'total_expenses': total_expenses,
+        'balance': total_income - total_expenses
+    }
+
+
 # Routes
 @app.route('/')
 def index():
@@ -222,7 +274,6 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
 
-    # Only allow registration if no users exist (single user app)
     if User.query.count() > 0:
         flash('Registration is closed. This is a single-user app.', 'error')
         return redirect(url_for('login'))
@@ -244,6 +295,32 @@ def register():
         db.session.add(user)
         db.session.commit()
 
+        # Create default categories for new user
+        default_income_cats = [
+            ('Salary', 'briefcase', '#22c55e'),
+            ('Freelance', 'laptop', '#10b981'),
+            ('Investment', 'graph-up', '#14b8a6'),
+            ('Other', 'cash', '#6ee7b7')
+        ]
+        default_expense_cats = [
+            ('Food', 'egg-fried', '#ef4444'),
+            ('Transport', 'car-front', '#f97316'),
+            ('Shopping', 'bag', '#ec4899'),
+            ('Bills', 'receipt', '#8b5cf6'),
+            ('Entertainment', 'controller', '#6366f1'),
+            ('Other', 'three-dots', '#a3a3a3')
+        ]
+
+        for name, icon, color in default_income_cats:
+            cat = IncomeCategory(user_id=user.id, name=name, icon=icon, color=color)
+            db.session.add(cat)
+
+        for name, icon, color in default_expense_cats:
+            cat = ExpenseCategory(user_id=user.id, name=name, icon=icon, color=color)
+            db.session.add(cat)
+
+        db.session.commit()
+
         login_user(user)
         flash('Account created successfully!', 'success')
         return redirect(url_for('dashboard'))
@@ -261,38 +338,37 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Get summary data
-    total_income = db.session.query(db.func.sum(Income.amount)).filter_by(user_id=current_user.id).scalar() or 0
-    total_expenses = db.session.query(db.func.sum(Expense.amount)).filter_by(user_id=current_user.id).scalar() or 0
-    balance = total_income - total_expenses
+    stats = get_user_stats(current_user.id)
 
     recent_income = Income.query.filter_by(user_id=current_user.id).order_by(Income.date.desc()).limit(5).all()
     recent_expenses = Expense.query.filter_by(user_id=current_user.id).order_by(Expense.date.desc()).limit(5).all()
 
-    # Get current month data for calendar preview
+    # Get bank accounts total
+    bank_total = db.session.query(db.func.sum(BankAccount.balance)).filter_by(user_id=current_user.id).scalar() or 0
+    bank_count = BankAccount.query.filter_by(user_id=current_user.id).count()
+
+    # Get current month data
     today = date.today()
-    month_income = Income.query.filter(
+    month_income = db.session.query(db.func.sum(Income.amount)).filter(
         Income.user_id == current_user.id,
         db.extract('year', Income.date) == today.year,
         db.extract('month', Income.date) == today.month
-    ).all()
-    month_expenses = Expense.query.filter(
+    ).scalar() or 0
+
+    month_expenses = db.session.query(db.func.sum(Expense.amount)).filter(
         Expense.user_id == current_user.id,
         db.extract('year', Expense.date) == today.year,
         db.extract('month', Expense.date) == today.month
-    ).all()
-
-    month_income_total = sum(i.amount for i in month_income)
-    month_expense_total = sum(e.amount for e in month_expenses)
+    ).scalar() or 0
 
     return render_template('dashboard.html',
-                         total_income=total_income,
-                         total_expenses=total_expenses,
-                         balance=balance,
+                         stats=stats,
                          recent_income=recent_income,
                          recent_expenses=recent_expenses,
-                         month_income_total=month_income_total,
-                         month_expense_total=month_expense_total,
+                         bank_total=bank_total,
+                         bank_count=bank_count,
+                         month_income=month_income,
+                         month_expenses=month_expenses,
                          current_month=today.strftime('%B %Y'))
 
 
@@ -301,18 +377,19 @@ def dashboard():
 @login_required
 def income_list():
     incomes = Income.query.filter_by(user_id=current_user.id).order_by(Income.date.desc()).all()
+    categories = IncomeCategory.query.filter_by(user_id=current_user.id).order_by(IncomeCategory.name).all()
     total = sum(i.amount for i in incomes)
-    return render_template('income.html', incomes=incomes, total=total)
+    return render_template('income.html', incomes=incomes, categories=categories, total=total)
 
 
 @app.route('/income/add', methods=['GET', 'POST'])
 @login_required
 def income_add():
-    folders = Folder.query.filter_by(user_id=current_user.id).order_by(Folder.name).all()
+    categories = IncomeCategory.query.filter_by(user_id=current_user.id).order_by(IncomeCategory.name).all()
     clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
 
     if request.method == 'POST':
-        folder_id = request.form.get('folder_id')
+        category_id = request.form.get('category_id')
         client_id = request.form.get('client_id')
 
         income = Income(
@@ -321,45 +398,45 @@ def income_add():
             amount=float(request.form.get('amount')),
             date=datetime.strptime(request.form.get('date'), '%Y-%m-%d').date(),
             notes=request.form.get('notes'),
-            folder_id=int(folder_id) if folder_id else None,
+            category_id=int(category_id) if category_id else None,
             client_id=int(client_id) if client_id else None
         )
         db.session.add(income)
         db.session.commit()
 
         log_activity(current_user.id, 'created', 'income', income.id,
-                    f'Added income: {income.source}', income.amount)
+                    f'+${income.amount:.2f} {income.source}', income.amount)
 
-        flash('Income added successfully!', 'success')
+        flash('Income added! +XP', 'success')
         return redirect(url_for('income_list'))
-    return render_template('income_form.html', folders=folders, clients=clients)
+    return render_template('income_form.html', categories=categories, clients=clients)
 
 
 @app.route('/income/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def income_edit(id):
     income = Income.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-    folders = Folder.query.filter_by(user_id=current_user.id).order_by(Folder.name).all()
+    categories = IncomeCategory.query.filter_by(user_id=current_user.id).order_by(IncomeCategory.name).all()
     clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
 
     if request.method == 'POST':
-        folder_id = request.form.get('folder_id')
+        category_id = request.form.get('category_id')
         client_id = request.form.get('client_id')
 
         income.source = request.form.get('source')
         income.amount = float(request.form.get('amount'))
         income.date = datetime.strptime(request.form.get('date'), '%Y-%m-%d').date()
         income.notes = request.form.get('notes')
-        income.folder_id = int(folder_id) if folder_id else None
+        income.category_id = int(category_id) if category_id else None
         income.client_id = int(client_id) if client_id else None
         db.session.commit()
 
         log_activity(current_user.id, 'updated', 'income', income.id,
-                    f'Updated income: {income.source}', income.amount)
+                    f'Updated: {income.source}', income.amount)
 
-        flash('Income updated successfully!', 'success')
+        flash('Income updated!', 'success')
         return redirect(url_for('income_list'))
-    return render_template('income_form.html', income=income, folders=folders, clients=clients)
+    return render_template('income_form.html', income=income, categories=categories, clients=clients)
 
 
 @app.route('/income/delete/<int:id>', methods=['POST'])
@@ -368,12 +445,62 @@ def income_delete(id):
     income = Income.query.filter_by(id=id, user_id=current_user.id).first_or_404()
 
     log_activity(current_user.id, 'deleted', 'income', income.id,
-                f'Deleted income: {income.source}', income.amount)
+                f'Deleted: {income.source}', income.amount)
 
     db.session.delete(income)
     db.session.commit()
-    flash('Income deleted successfully!', 'success')
+    flash('Income deleted!', 'success')
     return redirect(url_for('income_list'))
+
+
+# Income Category routes
+@app.route('/income/categories')
+@login_required
+def income_categories():
+    categories = IncomeCategory.query.filter_by(user_id=current_user.id).order_by(IncomeCategory.name).all()
+    return render_template('income_categories.html', categories=categories)
+
+
+@app.route('/income/categories/add', methods=['GET', 'POST'])
+@login_required
+def income_category_add():
+    if request.method == 'POST':
+        category = IncomeCategory(
+            user_id=current_user.id,
+            name=request.form.get('name'),
+            icon=request.form.get('icon', 'cash'),
+            color=request.form.get('color', '#22c55e')
+        )
+        db.session.add(category)
+        db.session.commit()
+        flash('Income type created!', 'success')
+        return redirect(url_for('income_categories'))
+    return render_template('income_category_form.html')
+
+
+@app.route('/income/categories/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def income_category_edit(id):
+    category = IncomeCategory.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    if request.method == 'POST':
+        category.name = request.form.get('name')
+        category.icon = request.form.get('icon', 'cash')
+        category.color = request.form.get('color', '#22c55e')
+        db.session.commit()
+        flash('Income type updated!', 'success')
+        return redirect(url_for('income_categories'))
+    return render_template('income_category_form.html', category=category)
+
+
+@app.route('/income/categories/delete/<int:id>', methods=['POST'])
+@login_required
+def income_category_delete(id):
+    category = IncomeCategory.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    Income.query.filter_by(category_id=id).update({'category_id': None})
+    db.session.delete(category)
+    db.session.commit()
+    flash('Income type deleted!', 'success')
+    return redirect(url_for('income_categories'))
 
 
 # Expense routes
@@ -381,61 +508,60 @@ def income_delete(id):
 @login_required
 def expense_list():
     expenses = Expense.query.filter_by(user_id=current_user.id).order_by(Expense.date.desc()).all()
+    categories = ExpenseCategory.query.filter_by(user_id=current_user.id).order_by(ExpenseCategory.name).all()
     total = sum(e.amount for e in expenses)
-    return render_template('expenses.html', expenses=expenses, total=total)
+    return render_template('expenses.html', expenses=expenses, categories=categories, total=total)
 
 
 @app.route('/expenses/add', methods=['GET', 'POST'])
 @login_required
 def expense_add():
-    folders = Folder.query.filter_by(user_id=current_user.id).order_by(Folder.name).all()
+    categories = ExpenseCategory.query.filter_by(user_id=current_user.id).order_by(ExpenseCategory.name).all()
 
     if request.method == 'POST':
-        folder_id = request.form.get('folder_id')
+        category_id = request.form.get('category_id')
 
         expense = Expense(
             user_id=current_user.id,
-            category=request.form.get('category'),
             description=request.form.get('description'),
             amount=float(request.form.get('amount')),
             date=datetime.strptime(request.form.get('date'), '%Y-%m-%d').date(),
             notes=request.form.get('notes'),
-            folder_id=int(folder_id) if folder_id else None
+            category_id=int(category_id) if category_id else None
         )
         db.session.add(expense)
         db.session.commit()
 
         log_activity(current_user.id, 'created', 'expense', expense.id,
-                    f'Added expense: {expense.description}', expense.amount)
+                    f'-${expense.amount:.2f} {expense.description}', expense.amount)
 
-        flash('Expense added successfully!', 'success')
+        flash('Expense added! +XP', 'success')
         return redirect(url_for('expense_list'))
-    return render_template('expense_form.html', folders=folders)
+    return render_template('expense_form.html', categories=categories)
 
 
 @app.route('/expenses/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def expense_edit(id):
     expense = Expense.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-    folders = Folder.query.filter_by(user_id=current_user.id).order_by(Folder.name).all()
+    categories = ExpenseCategory.query.filter_by(user_id=current_user.id).order_by(ExpenseCategory.name).all()
 
     if request.method == 'POST':
-        folder_id = request.form.get('folder_id')
+        category_id = request.form.get('category_id')
 
-        expense.category = request.form.get('category')
         expense.description = request.form.get('description')
         expense.amount = float(request.form.get('amount'))
         expense.date = datetime.strptime(request.form.get('date'), '%Y-%m-%d').date()
         expense.notes = request.form.get('notes')
-        expense.folder_id = int(folder_id) if folder_id else None
+        expense.category_id = int(category_id) if category_id else None
         db.session.commit()
 
         log_activity(current_user.id, 'updated', 'expense', expense.id,
-                    f'Updated expense: {expense.description}', expense.amount)
+                    f'Updated: {expense.description}', expense.amount)
 
-        flash('Expense updated successfully!', 'success')
+        flash('Expense updated!', 'success')
         return redirect(url_for('expense_list'))
-    return render_template('expense_form.html', expense=expense, folders=folders)
+    return render_template('expense_form.html', expense=expense, categories=categories)
 
 
 @app.route('/expenses/delete/<int:id>', methods=['POST'])
@@ -444,75 +570,128 @@ def expense_delete(id):
     expense = Expense.query.filter_by(id=id, user_id=current_user.id).first_or_404()
 
     log_activity(current_user.id, 'deleted', 'expense', expense.id,
-                f'Deleted expense: {expense.description}', expense.amount)
+                f'Deleted: {expense.description}', expense.amount)
 
     db.session.delete(expense)
     db.session.commit()
-    flash('Expense deleted successfully!', 'success')
+    flash('Expense deleted!', 'success')
     return redirect(url_for('expense_list'))
 
 
-# Folder routes
-@app.route('/folders')
+# Expense Category routes
+@app.route('/expenses/categories')
 @login_required
-def folder_list():
-    folders = Folder.query.filter_by(user_id=current_user.id).order_by(Folder.name).all()
-    return render_template('folders.html', folders=folders)
+def expense_categories():
+    categories = ExpenseCategory.query.filter_by(user_id=current_user.id).order_by(ExpenseCategory.name).all()
+    return render_template('expense_categories.html', categories=categories)
 
 
-@app.route('/folders/add', methods=['GET', 'POST'])
+@app.route('/expenses/categories/add', methods=['GET', 'POST'])
 @login_required
-def folder_add():
+def expense_category_add():
     if request.method == 'POST':
-        folder = Folder(
+        category = ExpenseCategory(
             user_id=current_user.id,
             name=request.form.get('name'),
-            color=request.form.get('color', '#6366f1')
+            icon=request.form.get('icon', 'cart'),
+            color=request.form.get('color', '#ef4444')
         )
-        db.session.add(folder)
+        db.session.add(category)
         db.session.commit()
-
-        log_activity(current_user.id, 'created', 'folder', folder.id,
-                    f'Created folder: {folder.name}')
-
-        flash('Folder created successfully!', 'success')
-        return redirect(url_for('folder_list'))
-    return render_template('folder_form.html')
+        flash('Expense type created!', 'success')
+        return redirect(url_for('expense_categories'))
+    return render_template('expense_category_form.html')
 
 
-@app.route('/folders/edit/<int:id>', methods=['GET', 'POST'])
+@app.route('/expenses/categories/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
-def folder_edit(id):
-    folder = Folder.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+def expense_category_edit(id):
+    category = ExpenseCategory.query.filter_by(id=id, user_id=current_user.id).first_or_404()
     if request.method == 'POST':
-        folder.name = request.form.get('name')
-        folder.color = request.form.get('color', '#6366f1')
+        category.name = request.form.get('name')
+        category.icon = request.form.get('icon', 'cart')
+        category.color = request.form.get('color', '#ef4444')
+        db.session.commit()
+        flash('Expense type updated!', 'success')
+        return redirect(url_for('expense_categories'))
+    return render_template('expense_category_form.html', category=category)
+
+
+@app.route('/expenses/categories/delete/<int:id>', methods=['POST'])
+@login_required
+def expense_category_delete(id):
+    category = ExpenseCategory.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    Expense.query.filter_by(category_id=id).update({'category_id': None})
+    db.session.delete(category)
+    db.session.commit()
+    flash('Expense type deleted!', 'success')
+    return redirect(url_for('expense_categories'))
+
+
+# Balance / Bank Account routes
+@app.route('/balance')
+@login_required
+def balance_list():
+    accounts = BankAccount.query.filter_by(user_id=current_user.id).order_by(BankAccount.name).all()
+    total = sum(a.balance for a in accounts)
+    return render_template('balance.html', accounts=accounts, total=total)
+
+
+@app.route('/balance/add', methods=['GET', 'POST'])
+@login_required
+def balance_add():
+    if request.method == 'POST':
+        account = BankAccount(
+            user_id=current_user.id,
+            name=request.form.get('name'),
+            balance=float(request.form.get('balance', 0)),
+            icon=request.form.get('icon', 'bank'),
+            color=request.form.get('color', '#6366f1'),
+            notes=request.form.get('notes')
+        )
+        db.session.add(account)
         db.session.commit()
 
-        log_activity(current_user.id, 'updated', 'folder', folder.id,
-                    f'Updated folder: {folder.name}')
+        log_activity(current_user.id, 'created', 'bank_account', account.id,
+                    f'Added bank: {account.name}', account.balance)
 
-        flash('Folder updated successfully!', 'success')
-        return redirect(url_for('folder_list'))
-    return render_template('folder_form.html', folder=folder)
+        flash('Bank account added!', 'success')
+        return redirect(url_for('balance_list'))
+    return render_template('balance_form.html')
 
 
-@app.route('/folders/delete/<int:id>', methods=['POST'])
+@app.route('/balance/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
-def folder_delete(id):
-    folder = Folder.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+def balance_edit(id):
+    account = BankAccount.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    if request.method == 'POST':
+        account.name = request.form.get('name')
+        account.balance = float(request.form.get('balance', 0))
+        account.icon = request.form.get('icon', 'bank')
+        account.color = request.form.get('color', '#6366f1')
+        account.notes = request.form.get('notes')
+        db.session.commit()
 
-    # Remove folder associations from income/expenses
-    Income.query.filter_by(folder_id=id).update({'folder_id': None})
-    Expense.query.filter_by(folder_id=id).update({'folder_id': None})
+        log_activity(current_user.id, 'updated', 'bank_account', account.id,
+                    f'Updated bank: {account.name}', account.balance)
 
-    log_activity(current_user.id, 'deleted', 'folder', folder.id,
-                f'Deleted folder: {folder.name}')
+        flash('Bank account updated!', 'success')
+        return redirect(url_for('balance_list'))
+    return render_template('balance_form.html', account=account)
 
-    db.session.delete(folder)
+
+@app.route('/balance/delete/<int:id>', methods=['POST'])
+@login_required
+def balance_delete(id):
+    account = BankAccount.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+
+    log_activity(current_user.id, 'deleted', 'bank_account', account.id,
+                f'Deleted bank: {account.name}', account.balance)
+
+    db.session.delete(account)
     db.session.commit()
-    flash('Folder deleted successfully!', 'success')
-    return redirect(url_for('folder_list'))
+    flash('Bank account deleted!', 'success')
+    return redirect(url_for('balance_list'))
 
 
 # Client routes
@@ -535,11 +714,7 @@ def client_add():
         )
         db.session.add(client)
         db.session.commit()
-
-        log_activity(current_user.id, 'created', 'client', client.id,
-                    f'Created client: {client.name}')
-
-        flash('Client added successfully!', 'success')
+        flash('Client added!', 'success')
         return redirect(url_for('client_list'))
     return render_template('client_form.html')
 
@@ -553,11 +728,7 @@ def client_edit(id):
         client.email = request.form.get('email')
         client.notes = request.form.get('notes')
         db.session.commit()
-
-        log_activity(current_user.id, 'updated', 'client', client.id,
-                    f'Updated client: {client.name}')
-
-        flash('Client updated successfully!', 'success')
+        flash('Client updated!', 'success')
         return redirect(url_for('client_list'))
     return render_template('client_form.html', client=client)
 
@@ -566,16 +737,10 @@ def client_edit(id):
 @login_required
 def client_delete(id):
     client = Client.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-
-    # Remove client associations from income
     Income.query.filter_by(client_id=id).update({'client_id': None})
-
-    log_activity(current_user.id, 'deleted', 'client', client.id,
-                f'Deleted client: {client.name}')
-
     db.session.delete(client)
     db.session.commit()
-    flash('Client deleted successfully!', 'success')
+    flash('Client deleted!', 'success')
     return redirect(url_for('client_list'))
 
 
@@ -586,7 +751,6 @@ def calendar_view():
     year = request.args.get('year', date.today().year, type=int)
     month = request.args.get('month', date.today().month, type=int)
 
-    # Handle month overflow
     if month > 12:
         month = 1
         year += 1
@@ -600,7 +764,6 @@ def calendar_view():
 @app.route('/api/calendar/<int:year>/<int:month>')
 @login_required
 def calendar_data(year, month):
-    # Get income and expenses for the month
     incomes = Income.query.filter(
         Income.user_id == current_user.id,
         db.extract('year', Income.date) == year,
@@ -613,7 +776,6 @@ def calendar_data(year, month):
         db.extract('month', Expense.date) == month
     ).all()
 
-    # Build day data
     days_data = {}
 
     for income in incomes:
@@ -633,11 +795,9 @@ def calendar_data(year, month):
         days_data[day]['expenses'].append({
             'id': expense.id,
             'description': expense.description,
-            'category': expense.category,
             'amount': expense.amount
         })
 
-    # Calculate totals
     total_income = sum(i.amount for i in incomes)
     total_expenses = sum(e.amount for e in expenses)
 
@@ -693,9 +853,6 @@ def api_key_generate():
     db.session.add(api_key)
     db.session.commit()
 
-    log_activity(current_user.id, 'created', 'api_key', api_key.id,
-                f'Generated API key: {name}')
-
     flash(f'API key generated: {key}', 'success')
     return redirect(url_for('api_settings'))
 
@@ -704,17 +861,13 @@ def api_key_generate():
 @login_required
 def api_key_delete(id):
     api_key = ApiKey.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-
-    log_activity(current_user.id, 'deleted', 'api_key', api_key.id,
-                f'Revoked API key: {api_key.name}')
-
     db.session.delete(api_key)
     db.session.commit()
-    flash('API key revoked successfully!', 'success')
+    flash('API key revoked!', 'success')
     return redirect(url_for('api_settings'))
 
 
-# External API endpoint for n8n
+# External API endpoint
 @app.route('/api/v1/income', methods=['POST'])
 @require_api_key
 def api_add_income():
@@ -734,7 +887,6 @@ def api_add_income():
     except (ValueError, TypeError):
         return jsonify({'success': False, 'error': 'Invalid amount'}), 400
 
-    # Parse date or use today
     income_date = date.today()
     if data.get('date'):
         try:
@@ -742,20 +894,18 @@ def api_add_income():
         except ValueError:
             return jsonify({'success': False, 'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
 
-    # Handle folder - auto-create if doesn't exist
-    folder_id = None
-    if data.get('folder'):
-        folder = Folder.query.filter_by(
+    category_id = None
+    if data.get('category'):
+        category = IncomeCategory.query.filter_by(
             user_id=request.api_user_id,
-            name=data['folder']
+            name=data['category']
         ).first()
-        if not folder:
-            folder = Folder(user_id=request.api_user_id, name=data['folder'])
-            db.session.add(folder)
+        if not category:
+            category = IncomeCategory(user_id=request.api_user_id, name=data['category'])
+            db.session.add(category)
             db.session.flush()
-        folder_id = folder.id
+        category_id = category.id
 
-    # Handle client - auto-create if doesn't exist
     client_id = None
     if data.get('client'):
         client = Client.query.filter_by(
@@ -774,14 +924,11 @@ def api_add_income():
         amount=amount,
         date=income_date,
         notes=data.get('notes'),
-        folder_id=folder_id,
+        category_id=category_id,
         client_id=client_id
     )
     db.session.add(income)
     db.session.commit()
-
-    log_activity(request.api_user_id, 'created', 'income', income.id,
-                f'Added income via API: {name}', amount)
 
     return jsonify({
         'success': True,
@@ -812,11 +959,7 @@ def credential_add():
         credential.set_password(request.form.get('password'))
         db.session.add(credential)
         db.session.commit()
-
-        log_activity(current_user.id, 'created', 'credential', credential.id,
-                    f'Added credential: {credential.name}')
-
-        flash('Credential added successfully!', 'success')
+        flash('Credential added!', 'success')
         return redirect(url_for('credential_list'))
     return render_template('credential_form.html')
 
@@ -834,11 +977,7 @@ def credential_edit(id):
         if password:
             credential.set_password(password)
         db.session.commit()
-
-        log_activity(current_user.id, 'updated', 'credential', credential.id,
-                    f'Updated credential: {credential.name}')
-
-        flash('Credential updated successfully!', 'success')
+        flash('Credential updated!', 'success')
         return redirect(url_for('credential_list'))
     return render_template('credential_form.html', credential=credential)
 
@@ -847,13 +986,9 @@ def credential_edit(id):
 @login_required
 def credential_delete(id):
     credential = Credential.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-
-    log_activity(current_user.id, 'deleted', 'credential', credential.id,
-                f'Deleted credential: {credential.name}')
-
     db.session.delete(credential)
     db.session.commit()
-    flash('Credential deleted successfully!', 'success')
+    flash('Credential deleted!', 'success')
     return redirect(url_for('credential_list'))
 
 
@@ -885,11 +1020,7 @@ def link_add():
         )
         db.session.add(link)
         db.session.commit()
-
-        log_activity(current_user.id, 'created', 'link', link.id,
-                    f'Added link: {link.name}')
-
-        flash('Link added successfully!', 'success')
+        flash('Link added!', 'success')
         return redirect(url_for('link_list'))
     return render_template('link_form.html')
 
@@ -904,11 +1035,7 @@ def link_edit(id):
         link.category = request.form.get('category')
         link.notes = request.form.get('notes')
         db.session.commit()
-
-        log_activity(current_user.id, 'updated', 'link', link.id,
-                    f'Updated link: {link.name}')
-
-        flash('Link updated successfully!', 'success')
+        flash('Link updated!', 'success')
         return redirect(url_for('link_list'))
     return render_template('link_form.html', link=link)
 
@@ -917,13 +1044,9 @@ def link_edit(id):
 @login_required
 def link_delete(id):
     link = Link.query.filter_by(id=id, user_id=current_user.id).first_or_404()
-
-    log_activity(current_user.id, 'deleted', 'link', link.id,
-                f'Deleted link: {link.name}')
-
     db.session.delete(link)
     db.session.commit()
-    flash('Link deleted successfully!', 'success')
+    flash('Link deleted!', 'success')
     return redirect(url_for('link_list'))
 
 

@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}{{ 'Edit' if link else 'Add' }} Link - MyHub{% endblock %}
+{% block title %}{{ 'Edit' if link else 'Add' }} Link - BudgetQuest{% endblock %}
 
 {% block content %}
 <div class="mb-4">
     <a href="{{ url_for('link_list') }}" class="text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Links</a>
 </div>
 
-<div class="card" style="max-width: 500px;">
-    <div class="card-header">
-        <h5 class="mb-0">{{ 'Edit' if link else 'Add' }} Link</h5>
+<div class="game-card" style="max-width: 500px;">
+    <div class="game-card-header">
+        <h5 class="mb-0"><i class="bi bi-link-45deg me-2" style="color: var(--neon-pink);"></i>{{ 'Edit' if link else 'Add' }} Link</h5>
     </div>
-    <div class="card-body">
+    <div class="game-card-body">
         <form method="POST">
             <div class="mb-3">
                 <label for="name" class="form-label">Name *</label>
@@ -39,8 +39,8 @@
                 <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional notes">{{ link.notes if link else '' }}</textarea>
             </div>
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> {{ 'Update' if link else 'Save' }} Link</button>
-                <a href="{{ url_for('link_list') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-game"><i class="bi bi-check-lg me-1"></i> {{ 'Update' if link else 'Save' }} Link</button>
+                <a href="{{ url_for('link_list') }}" class="btn btn-outline-game">Cancel</a>
             </div>
         </form>
     </div>

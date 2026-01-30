@@ -3,219 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MyHub{% endblock %}</title>
+    <title>{% block title %}BudgetQuest{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap');
+
         :root {
-            --bg-primary: #0f0f0f;
-            --bg-secondary: #1a1a1a;
-            --bg-tertiary: #262626;
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-hover: #1a1a2e;
+            --neon-green: #00ff88;
+            --neon-red: #ff4757;
+            --neon-blue: #00d4ff;
+            --neon-purple: #a855f7;
+            --neon-yellow: #ffd93d;
+            --neon-pink: #ff6b9d;
             --text-primary: #ffffff;
-            --text-secondary: #a3a3a3;
-            --accent-primary: #6366f1;
-            --accent-success: #22c55e;
-            --accent-danger: #ef4444;
-            --accent-warning: #f59e0b;
-            --border-color: #333333;
+            --text-muted: #6b7280;
+            --border-color: #2a2a3e;
+            --gold: #ffd700;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
-            background-color: var(--bg-primary);
+            background: var(--bg-dark);
+            background-image:
+                radial-gradient(ellipse at top, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(0, 212, 255, 0.05) 0%, transparent 50%);
             color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, sans-serif;
             min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
         }
 
         /* Navbar */
         .navbar {
-            background-color: var(--bg-secondary);
+            background: rgba(18, 18, 26, 0.95);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
-            padding: 0.75rem 0;
+            padding: 0.5rem 0;
         }
 
         .navbar-brand {
-            color: var(--text-primary) !important;
-            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
             font-size: 1.25rem;
+            color: var(--neon-blue) !important;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
         }
 
         .nav-link {
-            color: var(--text-secondary) !important;
-            padding: 0.5rem 1rem !important;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-            font-size: 0.9rem;
+            color: var(--text-muted) !important;
+            font-size: 0.85rem;
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
         .nav-link:hover, .nav-link.active {
             color: var(--text-primary) !important;
-            background-color: var(--bg-tertiary);
+            background: var(--bg-hover);
         }
 
-        .nav-link i {
-            margin-right: 0.25rem;
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 2px;
+            background: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+            border-radius: 2px;
         }
 
-        /* Cards */
-        .card {
-            background-color: var(--bg-secondary);
+        /* Game Cards */
+        .game-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .game-card:hover {
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .game-card-header {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+        }
+
+        .game-card-body { padding: 1.25rem; }
+
+        /* Stat Boxes */
+        .stat-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .stat-box.income::before { background: linear-gradient(90deg, var(--neon-green), transparent); }
+        .stat-box.expense::before { background: linear-gradient(90deg, var(--neon-red), transparent); }
+        .stat-box.balance::before { background: linear-gradient(90deg, var(--neon-blue), transparent); }
+        .stat-box.bank::before { background: linear-gradient(90deg, var(--neon-purple), transparent); }
+
+        .stat-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .stat-box.income h3 { color: var(--neon-green); text-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
+        .stat-box.expense h3 { color: var(--neon-red); text-shadow: 0 0 20px rgba(255, 71, 87, 0.3); }
+        .stat-box.balance h3 { color: var(--neon-blue); text-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+        .stat-box.bank h3 { color: var(--neon-purple); text-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        /* XP Bar */
+        .xp-bar-container {
+            background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-        }
-
-        .card-header {
-            background-color: transparent;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-primary);
-            font-weight: 600;
             padding: 1rem 1.25rem;
         }
 
-        .card-body {
-            padding: 1.25rem;
+        .xp-bar {
+            height: 12px;
+            background: var(--bg-hover);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
         }
 
-        .card-footer {
-            background-color: transparent;
-            border-top: 1px solid var(--border-color);
+        .xp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink));
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
         }
 
-        /* Stat Cards */
-        .stat-card {
-            padding: 1.25rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-secondary);
-        }
-
-        .stat-card.income {
-            border-left: 3px solid var(--accent-success);
-        }
-
-        .stat-card.expense {
-            border-left: 3px solid var(--accent-danger);
-        }
-
-        .stat-card.balance {
-            border-left: 3px solid var(--accent-primary);
-        }
-
-        .stat-card h3 {
-            font-size: 1.75rem;
+        .level-badge {
+            background: linear-gradient(135deg, var(--gold), #ff8c00);
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            margin: 0;
-            font-family: 'SF Mono', 'Fira Code', monospace;
-        }
-
-        .stat-card.income h3 { color: var(--accent-success); }
-        .stat-card.expense h3 { color: var(--accent-danger); }
-        .stat-card.balance h3 { color: var(--accent-primary); }
-
-        .stat-card p {
-            margin: 0 0 0.5rem 0;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
         }
 
         /* Buttons */
-        .btn-primary {
-            background-color: var(--accent-primary);
-            border-color: var(--accent-primary);
+        .btn-game {
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.625rem 1.25rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
         }
 
-        .btn-primary:hover {
-            background-color: #5558e3;
-            border-color: #5558e3;
-        }
-
-        .btn-success {
-            background-color: var(--accent-success);
-            border-color: var(--accent-success);
-        }
-
-        .btn-success:hover {
-            background-color: #1ea550;
-            border-color: #1ea550;
-        }
-
-        .btn-danger {
-            background-color: var(--accent-danger);
-            border-color: var(--accent-danger);
-        }
-
-        .btn-danger:hover {
-            background-color: #dc3030;
-            border-color: #dc3030;
-        }
-
-        .btn-outline-primary {
-            color: var(--accent-primary);
-            border-color: var(--accent-primary);
-        }
-
-        .btn-outline-primary:hover {
-            background-color: var(--accent-primary);
+        .btn-game:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
             color: white;
         }
 
-        .btn-outline-secondary {
-            color: var(--text-secondary);
-            border-color: var(--border-color);
+        .btn-income {
+            background: linear-gradient(135deg, var(--neon-green), #00cc6a);
         }
 
-        .btn-outline-secondary:hover {
-            background-color: var(--bg-tertiary);
-            border-color: var(--border-color);
+        .btn-income:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .btn-expense {
+            background: linear-gradient(135deg, var(--neon-red), #cc3344);
+        }
+
+        .btn-expense:hover {
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.5);
+        }
+
+        .btn-outline-game {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .btn-outline-game:hover {
+            background: var(--bg-hover);
+            border-color: var(--neon-purple);
             color: var(--text-primary);
-        }
-
-        .btn-outline-danger {
-            color: var(--accent-danger);
-            border-color: var(--accent-danger);
-        }
-
-        .btn-outline-danger:hover {
-            background-color: var(--accent-danger);
-            color: white;
         }
 
         /* Forms */
         .form-control, .form-select {
-            background-color: var(--bg-tertiary);
+            background: var(--bg-hover);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
-            border-radius: 8px;
-            padding: 0.625rem 0.875rem;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
         }
 
         .form-control:focus, .form-select:focus {
-            background-color: var(--bg-tertiary);
-            border-color: var(--accent-primary);
+            background: var(--bg-hover);
+            border-color: var(--neon-purple);
             color: var(--text-primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-        }
-
-        .form-control::placeholder {
-            color: var(--text-secondary);
-            opacity: 0.7;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
         }
 
         .form-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
             font-weight: 500;
-            margin-bottom: 0.5rem;
         }
 
         .input-group-text {
-            background-color: var(--bg-tertiary);
+            background: var(--bg-hover);
             border: 1px solid var(--border-color);
-            color: var(--text-secondary);
+            color: var(--neon-green);
+            font-family: 'Orbitron', sans-serif;
         }
 
         /* Tables */
@@ -225,14 +264,13 @@
         }
 
         .table thead th {
-            background-color: var(--bg-tertiary);
+            background: var(--bg-hover);
             border-bottom: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.875rem 1rem;
+            letter-spacing: 1px;
+            padding: 1rem;
         }
 
         .table tbody td {
@@ -242,75 +280,51 @@
         }
 
         .table-hover tbody tr:hover {
-            background-color: var(--bg-tertiary);
+            background: var(--bg-hover);
         }
 
-        /* List groups */
-        .list-group-item {
-            background-color: transparent;
-            border-color: var(--border-color);
-            color: var(--text-primary);
-            padding: 1rem 1.25rem;
-        }
-
-        .list-group-item:hover {
-            background-color: var(--bg-tertiary);
-        }
-
-        .list-group-flush > .list-group-item:first-child {
-            border-top: none;
-        }
-
-        /* Badges */
-        .badge {
+        /* Category Pills */
+        .category-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
             font-weight: 500;
-            padding: 0.35em 0.65em;
-            border-radius: 6px;
         }
 
-        .badge.bg-success {
-            background-color: rgba(34, 197, 94, 0.15) !important;
-            color: var(--accent-success);
+        /* Amount Display */
+        .amount {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 600;
         }
 
-        .badge.bg-danger {
-            background-color: rgba(239, 68, 68, 0.15) !important;
-            color: var(--accent-danger);
-        }
-
-        .badge.bg-secondary {
-            background-color: var(--bg-tertiary) !important;
-            color: var(--text-secondary);
-        }
-
-        .badge.bg-primary {
-            background-color: rgba(99, 102, 241, 0.15) !important;
-            color: var(--accent-primary);
-        }
+        .amount-income { color: var(--neon-green); }
+        .amount-expense { color: var(--neon-red); }
+        .amount-balance { color: var(--neon-blue); }
 
         /* Alerts */
-        .alert {
-            border: none;
-            border-radius: 8px;
-        }
-
         .alert-success {
-            background-color: rgba(34, 197, 94, 0.15);
-            color: var(--accent-success);
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
         }
 
         .alert-danger {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: var(--accent-danger);
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--neon-red);
+            color: var(--neon-red);
         }
 
-        /* Bottom Nav (Mobile) */
+        /* Bottom Nav */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: var(--bg-secondary);
+            background: rgba(18, 18, 26, 0.98);
+            backdrop-filter: blur(10px);
             border-top: 1px solid var(--border-color);
             z-index: 1000;
             display: none;
@@ -319,15 +333,19 @@
         .bottom-nav a {
             flex: 1;
             text-align: center;
-            padding: 10px 5px;
-            color: var(--text-secondary);
+            padding: 0.75rem 0.25rem;
+            color: var(--text-muted);
             text-decoration: none;
-            font-size: 0.7rem;
-            transition: all 0.2s;
+            font-size: 0.65rem;
+            transition: all 0.3s;
         }
 
         .bottom-nav a.active {
-            color: var(--accent-primary);
+            color: var(--neon-blue);
+        }
+
+        .bottom-nav a.active i {
+            text-shadow: 0 0 10px var(--neon-blue);
         }
 
         .bottom-nav i {
@@ -337,18 +355,24 @@
         }
 
         @media (max-width: 991px) {
-            .bottom-nav {
-                display: flex;
-            }
-            .desktop-nav {
-                display: none !important;
-            }
-            body {
-                padding-bottom: 70px;
-            }
+            .bottom-nav { display: flex; }
+            .desktop-nav { display: none !important; }
+            body { padding-bottom: 70px; }
         }
 
-        /* Flash messages */
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--text-muted);
+            opacity: 0.3;
+        }
+
+        /* Flash Messages */
         .flash-messages {
             position: fixed;
             top: 70px;
@@ -357,85 +381,37 @@
             max-width: 350px;
         }
 
-        /* Monospace for amounts */
-        .amount, .mono {
-            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-        }
-
-        /* Text colors */
-        .text-success { color: var(--accent-success) !important; }
-        .text-danger { color: var(--accent-danger) !important; }
-        .text-primary { color: var(--accent-primary) !important; }
-        .text-muted { color: var(--text-secondary) !important; }
-        .text-warning { color: var(--accent-warning) !important; }
-
         /* Links */
-        a {
-            color: var(--accent-primary);
-            text-decoration: none;
-        }
-
-        a:hover {
-            color: #8183f4;
-        }
-
-        /* Code */
-        code {
-            background-color: var(--bg-tertiary);
-            color: var(--accent-primary);
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
-            font-size: 0.85em;
-        }
-
-        /* Password field */
-        .password-field {
-            font-family: 'SF Mono', 'Fira Code', monospace;
-        }
+        a { color: var(--neon-blue); text-decoration: none; }
+        a:hover { color: var(--neon-purple); }
 
         /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+        /* Dropdown */
+        .dropdown-menu {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        .dropdown-item {
+            color: var(--text-muted);
+        }
+        .dropdown-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
         }
 
-        ::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
+        /* List Group */
+        .list-group-item {
+            background: transparent;
+            border-color: var(--border-color);
+            color: var(--text-primary);
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #444;
-        }
-
-        /* Folder color dot */
-        .folder-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 0.5rem;
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1.5rem;
-        }
-
-        .empty-state i {
-            font-size: 3rem;
-            color: var(--text-secondary);
-            opacity: 0.5;
-        }
-
-        .empty-state p {
-            color: var(--text-secondary);
-            margin-top: 1rem;
+        .list-group-item:hover {
+            background: var(--bg-hover);
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -445,24 +421,22 @@
     <nav class="navbar sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('dashboard') }}">
-                <i class="bi bi-wallet2 me-2"></i>MyHub
+                <i class="bi bi-controller me-2"></i>BudgetQuest
             </a>
             <div class="desktop-nav d-flex align-items-center gap-1">
-                <a class="nav-link {{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}"><i class="bi bi-grid"></i> Dashboard</a>
-                <a class="nav-link {{ 'active' if 'income' in request.endpoint }}" href="{{ url_for('income_list') }}"><i class="bi bi-arrow-up-circle"></i> Income</a>
-                <a class="nav-link {{ 'active' if 'expense' in request.endpoint }}" href="{{ url_for('expense_list') }}"><i class="bi bi-arrow-down-circle"></i> Expenses</a>
-                <a class="nav-link {{ 'active' if request.endpoint == 'calendar_view' }}" href="{{ url_for('calendar_view') }}"><i class="bi bi-calendar3"></i> Calendar</a>
-                <a class="nav-link {{ 'active' if 'folder' in request.endpoint }}" href="{{ url_for('folder_list') }}"><i class="bi bi-folder"></i> Folders</a>
+                <a class="nav-link {{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}"><i class="bi bi-house"></i> Home</a>
+                <a class="nav-link {{ 'active' if 'income' in request.endpoint }}" href="{{ url_for('income_list') }}"><i class="bi bi-plus-circle"></i> Income</a>
+                <a class="nav-link {{ 'active' if 'expense' in request.endpoint }}" href="{{ url_for('expense_list') }}"><i class="bi bi-dash-circle"></i> Expenses</a>
+                <a class="nav-link {{ 'active' if 'balance' in request.endpoint }}" href="{{ url_for('balance_list') }}"><i class="bi bi-bank"></i> Banks</a>
+                <a class="nav-link {{ 'active' if 'calendar' in request.endpoint }}" href="{{ url_for('calendar_view') }}"><i class="bi bi-calendar3"></i> Calendar</a>
                 <a class="nav-link {{ 'active' if 'client' in request.endpoint }}" href="{{ url_for('client_list') }}"><i class="bi bi-people"></i> Clients</a>
-                <a class="nav-link {{ 'active' if 'credential' in request.endpoint }}" href="{{ url_for('credential_list') }}"><i class="bi bi-key"></i> Keys</a>
-                <a class="nav-link {{ 'active' if 'link' in request.endpoint }}" href="{{ url_for('link_list') }}"><i class="bi bi-link-45deg"></i> Links</a>
                 <div class="dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-gear"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" style="background: var(--bg-secondary); border-color: var(--border-color);">
-                        <li><a class="dropdown-item text-light" href="{{ url_for('activity_log') }}"><i class="bi bi-clock-history me-2"></i>Activity</a></li>
-                        <li><a class="dropdown-item text-light" href="{{ url_for('api_settings') }}"><i class="bi bi-code-slash me-2"></i>API Keys</a></li>
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ url_for('credential_list') }}"><i class="bi bi-key me-2"></i>Keys</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('link_list') }}"><i class="bi bi-link-45deg me-2"></i>Links</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('activity_log') }}"><i class="bi bi-clock-history me-2"></i>Activity</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('api_settings') }}"><i class="bi bi-code-slash me-2"></i>API</a></li>
                         <li><hr class="dropdown-divider" style="border-color: var(--border-color);"></li>
                         <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
@@ -472,21 +446,11 @@
     </nav>
 
     <nav class="bottom-nav">
-        <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">
-            <i class="bi bi-grid"></i>Home
-        </a>
-        <a href="{{ url_for('income_list') }}" class="{{ 'active' if 'income' in request.endpoint }}">
-            <i class="bi bi-arrow-up-circle"></i>Income
-        </a>
-        <a href="{{ url_for('expense_list') }}" class="{{ 'active' if 'expense' in request.endpoint }}">
-            <i class="bi bi-arrow-down-circle"></i>Expenses
-        </a>
-        <a href="{{ url_for('calendar_view') }}" class="{{ 'active' if request.endpoint == 'calendar_view' }}">
-            <i class="bi bi-calendar3"></i>Calendar
-        </a>
-        <a href="{{ url_for('credential_list') }}" class="{{ 'active' if 'credential' in request.endpoint }}">
-            <i class="bi bi-key"></i>Keys
-        </a>
+        <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><i class="bi bi-house"></i>Home</a>
+        <a href="{{ url_for('income_list') }}" class="{{ 'active' if 'income' in request.endpoint }}"><i class="bi bi-plus-circle"></i>Income</a>
+        <a href="{{ url_for('expense_list') }}" class="{{ 'active' if 'expense' in request.endpoint }}"><i class="bi bi-dash-circle"></i>Expenses</a>
+        <a href="{{ url_for('balance_list') }}" class="{{ 'active' if 'balance' in request.endpoint }}"><i class="bi bi-bank"></i>Banks</a>
+        <a href="{{ url_for('calendar_view') }}" class="{{ 'active' if 'calendar' in request.endpoint }}"><i class="bi bi-calendar3"></i>Cal</a>
     </nav>
     {% endif %}
 
@@ -495,8 +459,8 @@
             {% if messages %}
                 {% for category, message in messages %}
                 <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <i class="bi bi-{{ 'x-circle' if category == 'error' else 'check-circle' }} me-2"></i>{{ message }}
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
                 </div>
                 {% endfor %}
             {% endif %}

@@ -1,24 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Expenses - MyHub{% endblock %}
+{% block title %}Expenses - BudgetQuest{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-arrow-down-circle text-danger me-2"></i>Expenses</h1>
-    <a href="{{ url_for('expense_add') }}" class="btn btn-danger"><i class="bi bi-plus-lg me-1"></i> Add Expense</a>
+    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-arrow-down-circle me-2" style="color: var(--neon-red);"></i>Expenses</h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('expense_categories') }}" class="btn btn-outline-game"><i class="bi bi-tag me-1"></i> Categories</a>
+        <a href="{{ url_for('expense_add') }}" class="btn btn-game btn-expense"><i class="bi bi-plus-lg me-1"></i> Add Expense</a>
+    </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted">Total Expenses</span>
-            <span class="h4 text-danger mb-0 amount">${{ "%.2f"|format(total) }}</span>
+<!-- Total Expenses Card -->
+<div class="stat-box expense mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <div class="stat-label"><i class="bi bi-credit-card me-1"></i> Total Expenses</div>
+            <h3 class="amount">${{ "%.2f"|format(total) }}</h3>
+        </div>
+        <div class="text-end">
+            <span class="text-muted">{{ expenses|length }} transaction{{ 's' if expenses|length != 1 }}</span>
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body p-0">
+<!-- Expenses List -->
+<div class="game-card">
+    <div class="game-card-body p-0">
         {% if expenses %}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -26,7 +34,6 @@
                     <tr>
                         <th>Description</th>
                         <th>Category</th>
-                        <th>Folder</th>
                         <th>Date</th>
                         <th class="text-end">Amount</th>
                         <th class="text-end">Actions</th>
@@ -39,19 +46,21 @@
                             <strong>{{ expense.description }}</strong>
                             {% if expense.notes %}<br><small class="text-muted">{{ expense.notes[:50] }}{% if expense.notes|length > 50 %}...{% endif %}</small>{% endif %}
                         </td>
-                        <td><span class="badge bg-secondary">{{ expense.category }}</span></td>
                         <td>
-                            {% if expense.folder %}
-                            <span class="folder-color" style="background-color: {{ expense.folder.color }};"></span>
-                            {{ expense.folder.name }}
+                            {% if expense.category %}
+                            <span class="category-pill" style="background: {{ expense.category.color }}20; color: {{ expense.category.color }};">
+                                <i class="bi bi-{{ expense.category.icon }}"></i> {{ expense.category.name }}
+                            </span>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                         <td>{{ expense.date.strftime('%b %d, %Y') }}</td>
-                        <td class="text-end text-danger fw-bold amount">${{ "%.2f"|format(expense.amount) }}</td>
                         <td class="text-end">
-                            <a href="{{ url_for('expense_edit', id=expense.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+                            <span class="amount amount-expense">-${{ "%.2f"|format(expense.amount) }}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('expense_edit', id=expense.id) }}" class="btn btn-sm btn-outline-game me-1"><i class="bi bi-pencil"></i></a>
                             <form action="{{ url_for('expense_delete', id=expense.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this expense?')">
                                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                             </form>
@@ -63,9 +72,10 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <i class="bi bi-arrow-down-circle"></i>
-            <p>No expenses recorded yet</p>
-            <a href="{{ url_for('expense_add') }}" class="btn btn-danger mt-2">Add Your First Expense</a>
+            <i class="bi bi-credit-card"></i>
+            <p class="text-muted mt-3">No expenses recorded yet</p>
+            <p class="text-muted small">Track your spending to level up!</p>
+            <a href="{{ url_for('expense_add') }}" class="btn btn-game btn-expense mt-2"><i class="bi bi-plus-lg me-1"></i> Add Your First Expense</a>
         </div>
         {% endif %}
     </div>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Income Categories - BudgetQuest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{{ url_for('income_list') }}" class="text-muted d-block mb-2"><i class="bi bi-arrow-left me-1"></i> Back to Income</a>
+        <h1 class="h4 mb-0 fw-bold"><i class="bi bi-tag me-2" style="color: var(--neon-green);"></i>Income Categories</h1>
+    </div>
+    <a href="{{ url_for('income_category_add') }}" class="btn btn-game btn-income"><i class="bi bi-plus-lg me-1"></i> Add Category</a>
+</div>
+
+<p class="text-muted mb-4">Create custom categories to organize your income streams.</p>
+
+<!-- Categories Grid -->
+<div class="row g-3">
+    {% if categories %}
+        {% for cat in categories %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="game-card h-100">
+                <div class="game-card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="d-flex align-items-center gap-3">
+                            <div style="width: 50px; height: 50px; border-radius: 12px; background: {{ cat.color }}20; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-{{ cat.icon }}" style="color: {{ cat.color }}; font-size: 1.5rem;"></i>
+                            </div>
+                            <div>
+                                <strong style="font-size: 1.1rem;">{{ cat.name }}</strong>
+                                <br><small class="text-muted">{{ cat.incomes|length }} transaction{{ 's' if cat.incomes|length != 1 }}</small>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-game" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('income_category_edit', id=cat.id) }}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+                                <li>
+                                    <form action="{{ url_for('income_category_delete', id=cat.id) }}" method="POST" onsubmit="return confirm('Delete this category? Income using this category will become uncategorized.')">
+                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Delete</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="game-card">
+            <div class="empty-state">
+                <i class="bi bi-tag"></i>
+                <p class="text-muted mt-3">No income categories yet</p>
+                <p class="text-muted small">Create categories to organize your income!</p>
+                <a href="{{ url_for('income_category_add') }}" class="btn btn-game btn-income mt-2"><i class="bi bi-plus-lg me-1"></i> Create Your First Category</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

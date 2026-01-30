@@ -1,31 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %}Income - MyHub{% endblock %}
+{% block title %}Income - BudgetQuest{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-arrow-up-circle text-success me-2"></i>Income</h1>
-    <a href="{{ url_for('income_add') }}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i> Add Income</a>
+    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-arrow-up-circle me-2" style="color: var(--neon-green);"></i>Income</h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('income_categories') }}" class="btn btn-outline-game"><i class="bi bi-tag me-1"></i> Categories</a>
+        <a href="{{ url_for('income_add') }}" class="btn btn-game btn-income"><i class="bi bi-plus-lg me-1"></i> Add Income</a>
+    </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted">Total Income</span>
-            <span class="h4 text-success mb-0 amount">${{ "%.2f"|format(total) }}</span>
+<!-- Total Income Card -->
+<div class="stat-box income mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <div class="stat-label"><i class="bi bi-coin me-1"></i> Total Income</div>
+            <h3 class="amount">${{ "%.2f"|format(total) }}</h3>
+        </div>
+        <div class="text-end">
+            <span class="text-muted">{{ incomes|length }} transaction{{ 's' if incomes|length != 1 }}</span>
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body p-0">
+<!-- Income List -->
+<div class="game-card">
+    <div class="game-card-body p-0">
         {% if incomes %}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
                         <th>Source</th>
-                        <th>Folder</th>
+                        <th>Category</th>
                         <th>Client</th>
                         <th>Date</th>
                         <th class="text-end">Amount</th>
@@ -40,24 +48,27 @@
                             {% if income.notes %}<br><small class="text-muted">{{ income.notes[:50] }}{% if income.notes|length > 50 %}...{% endif %}</small>{% endif %}
                         </td>
                         <td>
-                            {% if income.folder %}
-                            <span class="folder-color" style="background-color: {{ income.folder.color }};"></span>
-                            {{ income.folder.name }}
+                            {% if income.category %}
+                            <span class="category-pill" style="background: {{ income.category.color }}20; color: {{ income.category.color }};">
+                                <i class="bi bi-{{ income.category.icon }}"></i> {{ income.category.name }}
+                            </span>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if income.client %}
-                            {{ income.client.name }}
+                            <span class="text-muted"><i class="bi bi-person me-1"></i>{{ income.client.name }}</span>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
                         <td>{{ income.date.strftime('%b %d, %Y') }}</td>
-                        <td class="text-end text-success fw-bold amount">${{ "%.2f"|format(income.amount) }}</td>
                         <td class="text-end">
-                            <a href="{{ url_for('income_edit', id=income.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+                            <span class="amount amount-income">+${{ "%.2f"|format(income.amount) }}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('income_edit', id=income.id) }}" class="btn btn-sm btn-outline-game me-1"><i class="bi bi-pencil"></i></a>
                             <form action="{{ url_for('income_delete', id=income.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this income?')">
                                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                             </form>
@@ -69,9 +80,10 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <i class="bi bi-arrow-up-circle"></i>
-            <p>No income recorded yet</p>
-            <a href="{{ url_for('income_add') }}" class="btn btn-success mt-2">Add Your First Income</a>
+            <i class="bi bi-coin"></i>
+            <p class="text-muted mt-3">No income recorded yet</p>
+            <p class="text-muted small">Start tracking your earnings!</p>
+            <a href="{{ url_for('income_add') }}" class="btn btn-game btn-income mt-2"><i class="bi bi-plus-lg me-1"></i> Add Your First Income</a>
         </div>
         {% endif %}
     </div>

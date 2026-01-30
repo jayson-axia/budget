@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}{{ 'Edit' if expense else 'Add' }} Expense - MyHub{% endblock %}
+{% block title %}{{ 'Edit' if expense else 'Add' }} Expense - BudgetQuest{% endblock %}
 
 {% block content %}
 <div class="mb-4">
     <a href="{{ url_for('expense_list') }}" class="text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Expenses</a>
 </div>
 
-<div class="card" style="max-width: 600px;">
-    <div class="card-header">
-        <h5 class="mb-0">{{ 'Edit' if expense else 'Add' }} Expense</h5>
+<div class="game-card" style="max-width: 600px;">
+    <div class="game-card-header">
+        <h5 class="mb-0"><i class="bi bi-credit-card me-2" style="color: var(--neon-red);"></i>{{ 'Edit' if expense else 'Add' }} Expense</h5>
     </div>
-    <div class="card-body">
+    <div class="game-card-body">
         <form method="POST">
             <div class="mb-3">
                 <label for="description" class="form-label">Description *</label>
@@ -19,47 +19,38 @@
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="category" class="form-label">Category *</label>
-                    <select class="form-select" id="category" name="category" required>
-                        <option value="">Select category...</option>
-                        {% set categories = ['Food', 'Transportation', 'Utilities', 'Entertainment', 'Shopping', 'Healthcare', 'Education', 'Housing', 'Insurance', 'Subscriptions', 'Other'] %}
-                        {% for cat in categories %}
-                        <option value="{{ cat }}" {{ 'selected' if expense and expense.category == cat else '' }}>{{ cat }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
                     <label for="amount" class="form-label">Amount *</label>
                     <div class="input-group">
                         <span class="input-group-text">$</span>
                         <input type="number" step="0.01" class="form-control" id="amount" name="amount" value="{{ expense.amount if expense else '' }}" required placeholder="0.00">
                     </div>
                 </div>
-            </div>
-            <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="date" class="form-label">Date *</label>
                     <input type="date" class="form-control" id="date" name="date" value="{{ expense.date.strftime('%Y-%m-%d') if expense else '' }}" required>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="folder_id" class="form-label">Folder</label>
-                    <select class="form-select" id="folder_id" name="folder_id">
-                        <option value="">No folder</option>
-                        {% for folder in folders %}
-                        <option value="{{ folder.id }}" {{ 'selected' if expense and expense.folder_id == folder.id }}>
-                            {{ folder.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            </div>
+            <div class="mb-3">
+                <label for="category_id" class="form-label">Category</label>
+                <select class="form-select" id="category_id" name="category_id">
+                    <option value="">No category</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {{ 'selected' if expense and expense.category_id == cat.id }}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">
+                    <a href="{{ url_for('expense_categories') }}">Manage categories</a>
+                </small>
             </div>
             <div class="mb-4">
                 <label for="notes" class="form-label">Notes</label>
                 <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional notes">{{ expense.notes if expense else '' }}</textarea>
             </div>
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg me-1"></i> {{ 'Update' if expense else 'Add' }} Expense</button>
-                <a href="{{ url_for('expense_list') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-game btn-expense"><i class="bi bi-check-lg me-1"></i> {{ 'Update' if expense else 'Add' }} Expense</button>
+                <a href="{{ url_for('expense_list') }}" class="btn btn-outline-game">Cancel</a>
             </div>
         </form>
     </div>

@@ -1,166 +1,168 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - MyHub{% endblock %}
+{% block title %}Dashboard - BudgetQuest{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h4 mb-0 fw-bold">Dashboard</h1>
-    <span class="text-muted">Welcome, {{ current_user.username }}</span>
+<!-- Player Stats Bar -->
+<div class="xp-bar-container mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="d-flex align-items-center gap-3">
+            <span class="level-badge">LVL {{ stats.level }}</span>
+            <span class="text-muted">{{ current_user.username }}</span>
+        </div>
+        <small class="text-muted">{{ stats.xp }}/{{ stats.xp_needed }} XP to next level</small>
+    </div>
+    <div class="xp-bar">
+        <div class="xp-bar-fill" style="width: {{ (stats.xp / stats.xp_needed * 100)|int }}%;"></div>
+    </div>
 </div>
 
+<!-- Main Stats Grid -->
 <div class="row g-3 mb-4">
-    <div class="col-12 col-md-4">
-        <div class="stat-card income">
-            <p><i class="bi bi-arrow-up-circle me-1"></i> Total Income</p>
-            <h3 class="amount">${{ "%.2f"|format(total_income) }}</h3>
+    <div class="col-6 col-lg-3">
+        <div class="stat-box income">
+            <div class="stat-label"><i class="bi bi-arrow-up-circle me-1"></i> Total Income</div>
+            <h3 class="amount">${{ "%.2f"|format(stats.total_income) }}</h3>
         </div>
     </div>
-    <div class="col-12 col-md-4">
-        <div class="stat-card expense">
-            <p><i class="bi bi-arrow-down-circle me-1"></i> Total Expenses</p>
-            <h3 class="amount">${{ "%.2f"|format(total_expenses) }}</h3>
+    <div class="col-6 col-lg-3">
+        <div class="stat-box expense">
+            <div class="stat-label"><i class="bi bi-arrow-down-circle me-1"></i> Total Expenses</div>
+            <h3 class="amount">${{ "%.2f"|format(stats.total_expenses) }}</h3>
         </div>
     </div>
-    <div class="col-12 col-md-4">
-        <div class="stat-card balance">
-            <p><i class="bi bi-wallet me-1"></i> Balance</p>
-            <h3 class="amount">${{ "%.2f"|format(balance) }}</h3>
+    <div class="col-6 col-lg-3">
+        <div class="stat-box balance">
+            <div class="stat-label"><i class="bi bi-trophy me-1"></i> Net Balance</div>
+            <h3 class="amount">${{ "%.2f"|format(stats.balance) }}</h3>
         </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <a href="{{ url_for('balance_list') }}" class="text-decoration-none">
+            <div class="stat-box bank">
+                <div class="stat-label"><i class="bi bi-bank me-1"></i> Bank Total</div>
+                <h3 class="amount">${{ "%.2f"|format(bank_total) }}</h3>
+                <small class="text-muted">{{ bank_count }} account{{ 's' if bank_count != 1 }}</small>
+            </div>
+        </a>
     </div>
 </div>
 
-<!-- Month Summary Card -->
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-calendar3 me-2"></i>{{ current_month }}</span>
-        <a href="{{ url_for('calendar_view') }}" class="btn btn-sm btn-outline-primary">View Calendar</a>
+<!-- Month Progress -->
+<div class="game-card mb-4">
+    <div class="game-card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar-event me-2"></i>{{ current_month }} Progress</span>
+        <a href="{{ url_for('calendar_view') }}" class="btn btn-sm btn-outline-game">View Calendar</a>
     </div>
-    <div class="card-body">
+    <div class="game-card-body">
         <div class="row text-center">
             <div class="col-4">
-                <small class="text-muted d-block">Income</small>
-                <span class="amount text-success fw-bold">${{ "%.2f"|format(month_income_total) }}</span>
+                <div class="stat-label">Earned</div>
+                <span class="amount amount-income">${{ "%.2f"|format(month_income) }}</span>
             </div>
             <div class="col-4">
-                <small class="text-muted d-block">Expenses</small>
-                <span class="amount text-danger fw-bold">${{ "%.2f"|format(month_expense_total) }}</span>
+                <div class="stat-label">Spent</div>
+                <span class="amount amount-expense">${{ "%.2f"|format(month_expenses) }}</span>
             </div>
             <div class="col-4">
-                <small class="text-muted d-block">Net</small>
-                <span class="amount fw-bold {% if month_income_total - month_expense_total >= 0 %}text-success{% else %}text-danger{% endif %}">
-                    ${{ "%.2f"|format(month_income_total - month_expense_total) }}
+                <div class="stat-label">Saved</div>
+                <span class="amount {% if month_income - month_expenses >= 0 %}amount-income{% else %}amount-expense{% endif %}">
+                    ${{ "%.2f"|format(month_income - month_expenses) }}
                 </span>
             </div>
         </div>
+        {% if stats.savings_rate > 0 %}
+        <div class="mt-3">
+            <small class="text-muted">Savings Rate</small>
+            <div class="xp-bar mt-1">
+                <div class="xp-bar-fill" style="width: {{ stats.savings_rate|int }}%; background: linear-gradient(90deg, var(--neon-green), var(--neon-blue));"></div>
+            </div>
+            <small class="text-muted">{{ "%.1f"|format(stats.savings_rate) }}%</small>
+        </div>
+        {% endif %}
     </div>
 </div>
 
+<!-- Quick Actions -->
+<div class="row g-3 mb-4">
+    <div class="col-6">
+        <a href="{{ url_for('income_add') }}" class="btn btn-game btn-income w-100 py-3">
+            <i class="bi bi-plus-lg me-2"></i>Add Income
+        </a>
+    </div>
+    <div class="col-6">
+        <a href="{{ url_for('expense_add') }}" class="btn btn-game btn-expense w-100 py-3">
+            <i class="bi bi-dash-lg me-2"></i>Add Expense
+        </a>
+    </div>
+</div>
+
+<!-- Recent Activity -->
 <div class="row g-4">
     <div class="col-12 col-lg-6">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-arrow-up-circle text-success me-2"></i>Recent Income</span>
-                <a href="{{ url_for('income_add') }}" class="btn btn-sm btn-success"><i class="bi bi-plus"></i> Add</a>
+        <div class="game-card h-100">
+            <div class="game-card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-arrow-up-circle me-2" style="color: var(--neon-green);"></i>Recent Income</span>
+                <a href="{{ url_for('income_list') }}" class="btn btn-sm btn-outline-game">View All</a>
             </div>
-            <div class="card-body p-0">
+            <div class="game-card-body p-0">
                 {% if recent_income %}
                 <ul class="list-group list-group-flush">
                     {% for income in recent_income %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>{{ income.source }}</strong>
-                            {% if income.folder %}
-                            <span class="folder-color" style="background-color: {{ income.folder.color }};"></span>
+                            {% if income.category %}
+                            <span class="category-pill ms-2" style="background: {{ income.category.color }}20; color: {{ income.category.color }};">
+                                <i class="bi bi-{{ income.category.icon }}"></i> {{ income.category.name }}
+                            </span>
                             {% endif %}
-                            <br><small class="text-muted">{{ income.date.strftime('%b %d, %Y') }}</small>
+                            <br><small class="text-muted">{{ income.date.strftime('%b %d') }}</small>
                         </div>
-                        <span class="badge bg-success amount">${{ "%.2f"|format(income.amount) }}</span>
+                        <span class="amount amount-income">+${{ "%.2f"|format(income.amount) }}</span>
                     </li>
                     {% endfor %}
                 </ul>
                 {% else %}
                 <div class="empty-state">
-                    <i class="bi bi-arrow-up-circle"></i>
-                    <p class="mb-0">No income recorded yet</p>
+                    <i class="bi bi-inbox"></i>
+                    <p class="text-muted mt-2 mb-0">No income yet. Start earning!</p>
                 </div>
                 {% endif %}
-            </div>
-            <div class="card-footer">
-                <a href="{{ url_for('income_list') }}" class="text-muted">View all income <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
 
     <div class="col-12 col-lg-6">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-arrow-down-circle text-danger me-2"></i>Recent Expenses</span>
-                <a href="{{ url_for('expense_add') }}" class="btn btn-sm btn-danger"><i class="bi bi-plus"></i> Add</a>
+        <div class="game-card h-100">
+            <div class="game-card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-arrow-down-circle me-2" style="color: var(--neon-red);"></i>Recent Expenses</span>
+                <a href="{{ url_for('expense_list') }}" class="btn btn-sm btn-outline-game">View All</a>
             </div>
-            <div class="card-body p-0">
+            <div class="game-card-body p-0">
                 {% if recent_expenses %}
                 <ul class="list-group list-group-flush">
                     {% for expense in recent_expenses %}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>{{ expense.description }}</strong>
-                            {% if expense.folder %}
-                            <span class="folder-color" style="background-color: {{ expense.folder.color }};"></span>
+                            {% if expense.category %}
+                            <span class="category-pill ms-2" style="background: {{ expense.category.color }}20; color: {{ expense.category.color }};">
+                                <i class="bi bi-{{ expense.category.icon }}"></i> {{ expense.category.name }}
+                            </span>
                             {% endif %}
-                            <br><small class="text-muted">{{ expense.category }} - {{ expense.date.strftime('%b %d, %Y') }}</small>
+                            <br><small class="text-muted">{{ expense.date.strftime('%b %d') }}</small>
                         </div>
-                        <span class="badge bg-danger amount">${{ "%.2f"|format(expense.amount) }}</span>
+                        <span class="amount amount-expense">-${{ "%.2f"|format(expense.amount) }}</span>
                     </li>
                     {% endfor %}
                 </ul>
                 {% else %}
                 <div class="empty-state">
-                    <i class="bi bi-arrow-down-circle"></i>
-                    <p class="mb-0">No expenses recorded yet</p>
+                    <i class="bi bi-inbox"></i>
+                    <p class="text-muted mt-2 mb-0">No expenses yet. Good job!</p>
                 </div>
                 {% endif %}
-            </div>
-            <div class="card-footer">
-                <a href="{{ url_for('expense_list') }}" class="text-muted">View all expenses <i class="bi bi-arrow-right"></i></a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4 mt-2">
-    <div class="col-6 col-lg-3">
-        <div class="card">
-            <div class="card-body text-center py-4">
-                <i class="bi bi-folder text-primary" style="font-size: 1.75rem;"></i>
-                <h6 class="mt-2 mb-0">Folders</h6>
-                <a href="{{ url_for('folder_list') }}" class="stretched-link"></a>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card">
-            <div class="card-body text-center py-4">
-                <i class="bi bi-people text-primary" style="font-size: 1.75rem;"></i>
-                <h6 class="mt-2 mb-0">Clients</h6>
-                <a href="{{ url_for('client_list') }}" class="stretched-link"></a>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card">
-            <div class="card-body text-center py-4">
-                <i class="bi bi-key text-primary" style="font-size: 1.75rem;"></i>
-                <h6 class="mt-2 mb-0">Credentials</h6>
-                <a href="{{ url_for('credential_list') }}" class="stretched-link"></a>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card">
-            <div class="card-body text-center py-4">
-                <i class="bi bi-link-45deg text-primary" style="font-size: 1.75rem;"></i>
-                <h6 class="mt-2 mb-0">Links</h6>
-                <a href="{{ url_for('link_list') }}" class="stretched-link"></a>
             </div>
         </div>
     </div>

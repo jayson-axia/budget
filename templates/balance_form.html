@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if account else 'Add' }} Bank - BudgetQuest{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('balance_list') }}" class="text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Banks</a>
+</div>
+
+<div class="game-card" style="max-width: 500px;">
+    <div class="game-card-header">
+        <h5 class="mb-0"><i class="bi bi-bank me-2"></i>{{ 'Edit' if account else 'Add' }} Bank Account</h5>
+    </div>
+    <div class="game-card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="name" class="form-label">Bank Name *</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ account.name if account else '' }}" required placeholder="e.g., Chase, Wells Fargo, Cash">
+            </div>
+            <div class="mb-3">
+                <label for="balance" class="form-label">Current Balance *</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" step="0.01" class="form-control" id="balance" name="balance" value="{{ account.balance if account else '0' }}" required placeholder="0.00">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label for="icon" class="form-label">Icon</label>
+                    <select class="form-select" id="icon" name="icon">
+                        {% set icons = [('bank', 'Bank'), ('bank2', 'Bank 2'), ('credit-card', 'Card'), ('wallet2', 'Wallet'), ('piggy-bank', 'Piggy'), ('cash-stack', 'Cash'), ('coin', 'Coin'), ('safe', 'Safe')] %}
+                        {% for val, label in icons %}
+                        <option value="{{ val }}" {{ 'selected' if account and account.icon == val }}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 mb-3">
+                    <label for="color" class="form-label">Color</label>
+                    <input type="color" class="form-control form-control-color w-100" id="color" name="color" value="{{ account.color if account else '#6366f1' }}" style="height: 42px;">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="notes" class="form-label">Notes</label>
+                <textarea class="form-control" id="notes" name="notes" rows="2" placeholder="Optional notes">{{ account.notes if account else '' }}</textarea>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-game"><i class="bi bi-check-lg me-1"></i> {{ 'Update' if account else 'Add' }} Bank</button>
+                <a href="{{ url_for('balance_list') }}" class="btn btn-outline-game">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

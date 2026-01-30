@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if category else 'Add' }} Income Category - BudgetQuest{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('income_categories') }}" class="text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Categories</a>
+</div>
+
+<div class="game-card" style="max-width: 500px;">
+    <div class="game-card-header">
+        <h5 class="mb-0"><i class="bi bi-tag me-2" style="color: var(--neon-green);"></i>{{ 'Edit' if category else 'Add' }} Income Category</h5>
+    </div>
+    <div class="game-card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="name" class="form-label">Category Name *</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ category.name if category else '' }}" required placeholder="e.g., Salary, Freelance, Investments">
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label for="icon" class="form-label">Icon</label>
+                    <select class="form-select" id="icon" name="icon">
+                        {% set icons = [('cash', 'Cash'), ('cash-stack', 'Cash Stack'), ('coin', 'Coin'), ('currency-dollar', 'Dollar'), ('briefcase', 'Briefcase'), ('laptop', 'Laptop'), ('building', 'Building'), ('graph-up-arrow', 'Graph'), ('gift', 'Gift'), ('piggy-bank', 'Piggy Bank'), ('wallet2', 'Wallet'), ('bank', 'Bank')] %}
+                        {% for val, label in icons %}
+                        <option value="{{ val }}" {{ 'selected' if category and category.icon == val }}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 mb-4">
+                    <label for="color" class="form-label">Color</label>
+                    <input type="color" class="form-control form-control-color w-100" id="color" name="color" value="{{ category.color if category else '#22c55e' }}" style="height: 42px;">
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-game btn-income"><i class="bi bi-check-lg me-1"></i> {{ 'Update' if category else 'Create' }} Category</button>
+                <a href="{{ url_for('income_categories') }}" class="btn btn-outline-game">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

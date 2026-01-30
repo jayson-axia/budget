@@ -3,127 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - MyHub</title>
+    <title>Register - BudgetQuest</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0f0f0f;
-            --bg-secondary: #1a1a1a;
-            --bg-tertiary: #262626;
-            --text-primary: #ffffff;
-            --text-secondary: #a3a3a3;
-            --accent-primary: #6366f1;
-            --accent-danger: #ef4444;
-            --border-color: #333333;
+            --bg-dark: #0a0a0f;
+            --card-bg: #12121a;
+            --card-border: #1e1e2e;
+            --neon-green: #00ff88;
+            --neon-red: #ff4757;
+            --neon-blue: #00d4ff;
+            --neon-purple: #a855f7;
+            --neon-pink: #ff6b9d;
+            --gold: #ffd700;
         }
 
         body {
-            background-color: var(--bg-primary);
+            background: var(--bg-dark);
+            background-image:
+                radial-gradient(ellipse at top, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #fff;
         }
 
         .login-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
             padding: 2.5rem;
             width: 100%;
             max-width: 400px;
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.1);
         }
 
-        .login-card h1 {
-            color: var(--text-primary);
+        .icon-wrapper {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 212, 255, 0.2));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            border: 1px solid rgba(0, 255, 136, 0.3);
         }
 
-        .login-card p {
-            color: var(--text-secondary);
+        .icon-wrapper i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .form-label {
-            color: var(--text-secondary);
+            color: #a3a3a3;
             font-size: 0.875rem;
-        }
-
-        .form-control {
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-        }
-
-        .form-control:focus {
-            background-color: var(--bg-tertiary);
-            border-color: var(--accent-primary);
-            color: var(--text-primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-        }
-
-        .form-control::placeholder {
-            color: var(--text-secondary);
-            opacity: 0.5;
-        }
-
-        .form-text {
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-        }
-
-        .btn-primary {
-            background-color: var(--accent-primary);
-            border-color: var(--accent-primary);
-            padding: 0.75rem 1.5rem;
             font-weight: 500;
         }
 
-        .btn-primary:hover {
-            background-color: #5558e3;
-            border-color: #5558e3;
+        .form-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--neon-green);
+            color: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.2), 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #666;
+        }
+
+        .form-text {
+            color: #666;
+            font-size: 0.8rem;
+        }
+
+        .btn-game {
+            background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
+            border: none;
+            color: #0a0a0f;
+            font-weight: 700;
+            padding: 0.875rem 1.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        .btn-game:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+            color: #0a0a0f;
         }
 
         .alert {
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
         }
 
         .alert-danger {
-            background-color: rgba(239, 68, 68, 0.15);
-            color: var(--accent-danger);
+            background: rgba(255, 71, 87, 0.15);
+            color: var(--neon-red);
+            border: 1px solid rgba(255, 71, 87, 0.3);
         }
 
         .alert-success {
-            background-color: rgba(34, 197, 94, 0.15);
-            color: #22c55e;
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--neon-green);
+            border: 1px solid rgba(0, 255, 136, 0.3);
         }
 
         a {
-            color: var(--accent-primary);
+            color: var(--neon-blue);
             text-decoration: none;
+            transition: all 0.2s ease;
         }
 
         a:hover {
-            color: #8183f4;
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
         }
 
-        .icon-wrapper {
-            width: 64px;
-            height: 64px;
-            background: rgba(99, 102, 241, 0.1);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-        }
-
-        .icon-wrapper i {
-            font-size: 1.75rem;
-            color: var(--accent-primary);
+        .subtitle {
+            color: #666;
         }
     </style>
 </head>
@@ -131,10 +158,10 @@
     <div class="login-card">
         <div class="text-center mb-4">
             <div class="icon-wrapper">
-                <i class="bi bi-wallet2"></i>
+                <i class="bi bi-person-plus"></i>
             </div>
-            <h1 class="h3 fw-bold">Create Account</h1>
-            <p class="mb-0">Set up your personal hub</p>
+            <h1 class="h3 fw-bold mb-2">New Player</h1>
+            <p class="subtitle mb-0">Begin your budget adventure</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -150,23 +177,23 @@
 
         <form method="POST">
             <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" name="username" required autofocus>
+                <label for="username" class="form-label">Choose Username</label>
+                <input type="text" class="form-control" id="username" name="username" required autofocus placeholder="Your hero name">
             </div>
             <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" name="password" required minlength="8">
-                <div class="form-text">At least 8 characters</div>
+                <label for="password" class="form-label">Create Password</label>
+                <input type="password" class="form-control" id="password" name="password" required minlength="8" placeholder="At least 8 characters">
+                <div class="form-text">Minimum 8 characters for account security</div>
             </div>
             <div class="mb-4">
                 <label for="confirm" class="form-label">Confirm Password</label>
-                <input type="password" class="form-control" id="confirm" name="confirm" required>
+                <input type="password" class="form-control" id="confirm" name="confirm" required placeholder="Repeat your password">
             </div>
-            <button type="submit" class="btn btn-primary w-100">Create Account</button>
+            <button type="submit" class="btn btn-game w-100"><i class="bi bi-rocket-takeoff me-2"></i>Start Quest</button>
         </form>
 
-        <p class="text-center mt-4 mb-0" style="color: var(--text-secondary);">
-            Already have an account? <a href="{{ url_for('login') }}">Login</a>
+        <p class="text-center mt-4 mb-0 subtitle">
+            Already a player? <a href="{{ url_for('login') }}">Login</a>
         </p>
     </div>
 
