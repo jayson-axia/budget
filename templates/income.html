@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-cash text-success me-2"></i>Income</h1>
+    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-arrow-up-circle text-success me-2"></i>Income</h1>
     <a href="{{ url_for('income_add') }}" class="btn btn-success"><i class="bi bi-plus-lg me-1"></i> Add Income</a>
 </div>
 
@@ -12,7 +12,7 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center">
             <span class="text-muted">Total Income</span>
-            <span class="h4 text-success mb-0">${{ "%.2f"|format(total) }}</span>
+            <span class="h4 text-success mb-0 amount">${{ "%.2f"|format(total) }}</span>
         </div>
     </div>
 </div>
@@ -22,9 +22,11 @@
         {% if incomes %}
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead class="table-light">
+                <thead>
                     <tr>
                         <th>Source</th>
+                        <th>Folder</th>
+                        <th>Client</th>
                         <th>Date</th>
                         <th class="text-end">Amount</th>
                         <th class="text-end">Actions</th>
@@ -35,10 +37,25 @@
                     <tr>
                         <td>
                             <strong>{{ income.source }}</strong>
-                            {% if income.notes %}<br><small class="text-muted">{{ income.notes }}</small>{% endif %}
+                            {% if income.notes %}<br><small class="text-muted">{{ income.notes[:50] }}{% if income.notes|length > 50 %}...{% endif %}</small>{% endif %}
+                        </td>
+                        <td>
+                            {% if income.folder %}
+                            <span class="folder-color" style="background-color: {{ income.folder.color }};"></span>
+                            {{ income.folder.name }}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if income.client %}
+                            {{ income.client.name }}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
                         </td>
                         <td>{{ income.date.strftime('%b %d, %Y') }}</td>
-                        <td class="text-end text-success fw-bold">${{ "%.2f"|format(income.amount) }}</td>
+                        <td class="text-end text-success fw-bold amount">${{ "%.2f"|format(income.amount) }}</td>
                         <td class="text-end">
                             <a href="{{ url_for('income_edit', id=income.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
                             <form action="{{ url_for('income_delete', id=income.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this income?')">
@@ -51,10 +68,10 @@
             </table>
         </div>
         {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-cash text-muted" style="font-size: 3rem;"></i>
-            <p class="text-muted mt-3 mb-0">No income recorded yet</p>
-            <a href="{{ url_for('income_add') }}" class="btn btn-success mt-3">Add Your First Income</a>
+        <div class="empty-state">
+            <i class="bi bi-arrow-up-circle"></i>
+            <p>No income recorded yet</p>
+            <a href="{{ url_for('income_add') }}" class="btn btn-success mt-2">Add Your First Income</a>
         </div>
         {% endif %}
     </div>

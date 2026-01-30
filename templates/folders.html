@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Folders - MyHub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-folder text-primary me-2"></i>Folders</h1>
+    <a href="{{ url_for('folder_add') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> New Folder</a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if folders %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Items</th>
+                        <th>Created</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for folder in folders %}
+                    <tr>
+                        <td>
+                            <span class="folder-color" style="background-color: {{ folder.color }};"></span>
+                            <strong>{{ folder.name }}</strong>
+                        </td>
+                        <td>
+                            <span class="badge bg-success me-1">{{ folder.incomes|length }} income</span>
+                            <span class="badge bg-danger">{{ folder.expenses|length }} expense</span>
+                        </td>
+                        <td class="text-muted">{{ folder.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('folder_edit', id=folder.id) }}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></a>
+                            <form action="{{ url_for('folder_delete', id=folder.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this folder? Items will be unassigned but not deleted.')">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-folder"></i>
+            <p>No folders created yet</p>
+            <a href="{{ url_for('folder_add') }}" class="btn btn-primary mt-2">Create Your First Folder</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

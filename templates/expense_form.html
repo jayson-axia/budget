@@ -4,10 +4,10 @@
 
 {% block content %}
 <div class="mb-4">
-    <a href="{{ url_for('expense_list') }}" class="text-decoration-none"><i class="bi bi-arrow-left me-1"></i> Back to Expenses</a>
+    <a href="{{ url_for('expense_list') }}" class="text-muted"><i class="bi bi-arrow-left me-1"></i> Back to Expenses</a>
 </div>
 
-<div class="card">
+<div class="card" style="max-width: 600px;">
     <div class="card-header">
         <h5 class="mb-0">{{ 'Edit' if expense else 'Add' }} Expense</h5>
     </div>
@@ -36,9 +36,22 @@
                     </div>
                 </div>
             </div>
-            <div class="mb-3">
-                <label for="date" class="form-label">Date *</label>
-                <input type="date" class="form-control" id="date" name="date" value="{{ expense.date.strftime('%Y-%m-%d') if expense else '' }}" required>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="date" class="form-label">Date *</label>
+                    <input type="date" class="form-control" id="date" name="date" value="{{ expense.date.strftime('%Y-%m-%d') if expense else '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="folder_id" class="form-label">Folder</label>
+                    <select class="form-select" id="folder_id" name="folder_id">
+                        <option value="">No folder</option>
+                        {% for folder in folders %}
+                        <option value="{{ folder.id }}" {{ 'selected' if expense and expense.folder_id == folder.id }}>
+                            {{ folder.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
             <div class="mb-4">
                 <label for="notes" class="form-label">Notes</label>

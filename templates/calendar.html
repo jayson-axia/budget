@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar - MyHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background-color: var(--border-color);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .calendar-header {
+        background-color: var(--bg-tertiary);
+        padding: 0.75rem;
+        text-align: center;
+        font-weight: 500;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
+
+    .calendar-day {
+        background-color: var(--bg-secondary);
+        min-height: 100px;
+        padding: 0.5rem;
+        position: relative;
+    }
+
+    .calendar-day.other-month {
+        background-color: var(--bg-primary);
+        opacity: 0.5;
+    }
+
+    .calendar-day.today {
+        background-color: rgba(99, 102, 241, 0.1);
+    }
+
+    .day-number {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .today .day-number {
+        color: var(--accent-primary);
+    }
+
+    .day-events {
+        font-size: 0.7rem;
+    }
+
+    .day-income {
+        color: var(--accent-success);
+        margin-bottom: 2px;
+    }
+
+    .day-expense {
+        color: var(--accent-danger);
+        margin-bottom: 2px;
+    }
+
+    .day-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        margin-right: 4px;
+    }
+
+    .day-dot.income { background-color: var(--accent-success); }
+    .day-dot.expense { background-color: var(--accent-danger); }
+
+    .month-nav {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .month-nav .btn {
+        padding: 0.375rem 0.75rem;
+    }
+
+    @media (max-width: 768px) {
+        .calendar-day {
+            min-height: 60px;
+            padding: 0.25rem;
+        }
+
+        .day-number {
+            font-size: 0.75rem;
+        }
+
+        .day-events {
+            font-size: 0.6rem;
+        }
+
+        .calendar-header {
+            font-size: 0.65rem;
+            padding: 0.5rem 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-calendar3 text-primary me-2"></i>Calendar</h1>
+    <div class="month-nav">
+        <a href="{{ url_for('calendar_view', year=year, month=month-1) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        <span class="fw-bold" id="month-title"></span>
+        <a href="{{ url_for('calendar_view', year=year, month=month+1) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-4">
+        <div class="stat-card income">
+            <p><i class="bi bi-arrow-up-circle"></i> Income</p>
+            <h3 class="amount" id="total-income">$0.00</h3>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="stat-card expense">
+            <p><i class="bi bi-arrow-down-circle"></i> Expenses</p>
+            <h3 class="amount" id="total-expenses">$0.00</h3>
+        </div>
+    </div>
+    <div class="col-4">
+        <div class="stat-card balance">
+            <p><i class="bi bi-wallet"></i> Balance</p>
+            <h3 class="amount" id="total-balance">$0.00</h3>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="calendar-grid" id="calendar">
+            <div class="calendar-header">Sun</div>
+            <div class="calendar-header">Mon</div>
+            <div class="calendar-header">Tue</div>
+            <div class="calendar-header">Wed</div>
+            <div class="calendar-header">Thu</div>
+            <div class="calendar-header">Fri</div>
+            <div class="calendar-header">Sat</div>
+        </div>
+    </div>
+</div>
+
+<!-- Day Details Modal -->
+<div class="modal fade" id="dayModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: var(--bg-secondary); border-color: var(--border-color);">
+            <div class="modal-header" style="border-color: var(--border-color);">
+                <h5 class="modal-title" id="dayModalTitle">Day Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="dayModalBody">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const year = {{ year }};
+const month = {{ month }};
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+document.getElementById('month-title').textContent = `${months[month-1]} ${year}`;
+
+let calendarData = {};
+
+async function loadCalendar() {
+    const res = await fetch(`/api/calendar/${year}/${month}`);
+    const data = await res.json();
+    calendarData = data;
+
+    document.getElementById('total-income').textContent = `$${data.total_income.toFixed(2)}`;
+    document.getElementById('total-expenses').textContent = `$${data.total_expenses.toFixed(2)}`;
+    document.getElementById('total-balance').textContent = `$${data.balance.toFixed(2)}`;
+
+    const balanceEl = document.getElementById('total-balance');
+    if (data.balance < 0) {
+        balanceEl.classList.add('text-danger');
+        balanceEl.classList.remove('text-success');
+    }
+
+    renderCalendar(data);
+}
+
+function renderCalendar(data) {
+    const calendar = document.getElementById('calendar');
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === year && today.getMonth() + 1 === month;
+
+    // Clear existing days
+    const existingDays = calendar.querySelectorAll('.calendar-day');
+    existingDays.forEach(d => d.remove());
+
+    // First day of month (0 = Sunday)
+    const firstDay = data.first_day_weekday;
+    // Adjust for Sunday start (JS uses 0=Sunday, Python uses 0=Monday)
+    const startOffset = (firstDay + 1) % 7;
+
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startOffset; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day other-month';
+        calendar.appendChild(cell);
+    }
+
+    // Add days
+    for (let day = 1; day <= data.days_in_month; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+
+        if (isCurrentMonth && day === today.getDate()) {
+            cell.classList.add('today');
+        }
+
+        const dayData = data.days[day] || { income: [], expenses: [] };
+        const hasData = dayData.income.length > 0 || dayData.expenses.length > 0;
+
+        let html = `<div class="day-number">${day}</div>`;
+
+        if (hasData) {
+            html += '<div class="day-events">';
+
+            if (dayData.income.length > 0) {
+                const incomeTotal = dayData.income.reduce((sum, i) => sum + i.amount, 0);
+                html += `<div class="day-income"><span class="day-dot income"></span>+$${incomeTotal.toFixed(0)}</div>`;
+            }
+
+            if (dayData.expenses.length > 0) {
+                const expenseTotal = dayData.expenses.reduce((sum, e) => sum + e.amount, 0);
+                html += `<div class="day-expense"><span class="day-dot expense"></span>-$${expenseTotal.toFixed(0)}</div>`;
+            }
+
+            html += '</div>';
+
+            cell.style.cursor = 'pointer';
+            cell.onclick = () => showDayDetails(day, dayData);
+        }
+
+        cell.innerHTML = html;
+        calendar.appendChild(cell);
+    }
+}
+
+function showDayDetails(day, data) {
+    const modal = new bootstrap.Modal(document.getElementById('dayModal'));
+    document.getElementById('dayModalTitle').textContent = `${months[month-1]} ${day}, ${year}`;
+
+    let html = '';
+
+    if (data.income.length > 0) {
+        html += '<h6 class="text-success mb-2"><i class="bi bi-arrow-up-circle me-1"></i>Income</h6>';
+        html += '<ul class="list-group list-group-flush mb-3">';
+        data.income.forEach(i => {
+            html += `<li class="list-group-item d-flex justify-content-between">
+                <span>${i.source}</span>
+                <span class="text-success amount">+$${i.amount.toFixed(2)}</span>
+            </li>`;
+        });
+        html += '</ul>';
+    }
+
+    if (data.expenses.length > 0) {
+        html += '<h6 class="text-danger mb-2"><i class="bi bi-arrow-down-circle me-1"></i>Expenses</h6>';
+        html += '<ul class="list-group list-group-flush">';
+        data.expenses.forEach(e => {
+            html += `<li class="list-group-item d-flex justify-content-between">
+                <div>
+                    <span>${e.description}</span>
+                    <br><small class="text-muted">${e.category}</small>
+                </div>
+                <span class="text-danger amount">-$${e.amount.toFixed(2)}</span>
+            </li>`;
+        });
+        html += '</ul>';
+    }
+
+    document.getElementById('dayModalBody').innerHTML = html;
+    modal.show();
+}
+
+loadCalendar();
+</script>
+{% endblock %}

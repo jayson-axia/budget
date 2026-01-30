@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Log - MyHub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4 mb-0 fw-bold"><i class="bi bi-clock-history text-primary me-2"></i>Activity Log</h1>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-auto">
+                <select name="entity" class="form-select form-select-sm">
+                    <option value="">All Types</option>
+                    <option value="income" {{ 'selected' if entity_filter == 'income' }}>Income</option>
+                    <option value="expense" {{ 'selected' if entity_filter == 'expense' }}>Expense</option>
+                    <option value="folder" {{ 'selected' if entity_filter == 'folder' }}>Folder</option>
+                    <option value="client" {{ 'selected' if entity_filter == 'client' }}>Client</option>
+                    <option value="credential" {{ 'selected' if entity_filter == 'credential' }}>Credential</option>
+                    <option value="link" {{ 'selected' if entity_filter == 'link' }}>Link</option>
+                    <option value="api_key" {{ 'selected' if entity_filter == 'api_key' }}>API Key</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="action" class="form-select form-select-sm">
+                    <option value="">All Actions</option>
+                    <option value="created" {{ 'selected' if action_filter == 'created' }}>Created</option>
+                    <option value="updated" {{ 'selected' if action_filter == 'updated' }}>Updated</option>
+                    <option value="deleted" {{ 'selected' if action_filter == 'deleted' }}>Deleted</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+                <a href="{{ url_for('activity_log') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if logs %}
+        <div class="list-group list-group-flush">
+            {% for log in logs %}
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="badge
+                            {% if log.action == 'created' %}bg-success
+                            {% elif log.action == 'updated' %}bg-primary
+                            {% else %}bg-danger{% endif %}
+                            me-2">{{ log.action }}</span>
+                        <span class="badge bg-secondary me-2">{{ log.entity_type }}</span>
+                        <span>{{ log.description or 'No description' }}</span>
+                        {% if log.amount %}
+                        <span class="amount ms-2 {% if log.entity_type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                            ${{ "%.2f"|format(log.amount) }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">{{ log.created_at.strftime('%b %d, %Y %H:%M') }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-clock-history"></i>
+            <p>No activity logged yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

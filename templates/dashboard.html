@@ -5,26 +5,52 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h4 mb-0 fw-bold">Dashboard</h1>
-    <span class="text-muted">Welcome, {{ current_user.username }}!</span>
+    <span class="text-muted">Welcome, {{ current_user.username }}</span>
 </div>
 
 <div class="row g-3 mb-4">
     <div class="col-12 col-md-4">
         <div class="stat-card income">
             <p><i class="bi bi-arrow-up-circle me-1"></i> Total Income</p>
-            <h3>${{ "%.2f"|format(total_income) }}</h3>
+            <h3 class="amount">${{ "%.2f"|format(total_income) }}</h3>
         </div>
     </div>
     <div class="col-12 col-md-4">
         <div class="stat-card expense">
             <p><i class="bi bi-arrow-down-circle me-1"></i> Total Expenses</p>
-            <h3>${{ "%.2f"|format(total_expenses) }}</h3>
+            <h3 class="amount">${{ "%.2f"|format(total_expenses) }}</h3>
         </div>
     </div>
     <div class="col-12 col-md-4">
         <div class="stat-card balance">
             <p><i class="bi bi-wallet me-1"></i> Balance</p>
-            <h3>${{ "%.2f"|format(balance) }}</h3>
+            <h3 class="amount">${{ "%.2f"|format(balance) }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Month Summary Card -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar3 me-2"></i>{{ current_month }}</span>
+        <a href="{{ url_for('calendar_view') }}" class="btn btn-sm btn-outline-primary">View Calendar</a>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-4">
+                <small class="text-muted d-block">Income</small>
+                <span class="amount text-success fw-bold">${{ "%.2f"|format(month_income_total) }}</span>
+            </div>
+            <div class="col-4">
+                <small class="text-muted d-block">Expenses</small>
+                <span class="amount text-danger fw-bold">${{ "%.2f"|format(month_expense_total) }}</span>
+            </div>
+            <div class="col-4">
+                <small class="text-muted d-block">Net</small>
+                <span class="amount fw-bold {% if month_income_total - month_expense_total >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ${{ "%.2f"|format(month_income_total - month_expense_total) }}
+                </span>
+            </div>
         </div>
     </div>
 </div>
@@ -33,7 +59,7 @@
     <div class="col-12 col-lg-6">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-cash text-success me-2"></i>Recent Income</span>
+                <span><i class="bi bi-arrow-up-circle text-success me-2"></i>Recent Income</span>
                 <a href="{{ url_for('income_add') }}" class="btn btn-sm btn-success"><i class="bi bi-plus"></i> Add</a>
             </div>
             <div class="card-body p-0">
@@ -43,18 +69,24 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>{{ income.source }}</strong>
+                            {% if income.folder %}
+                            <span class="folder-color" style="background-color: {{ income.folder.color }};"></span>
+                            {% endif %}
                             <br><small class="text-muted">{{ income.date.strftime('%b %d, %Y') }}</small>
                         </div>
-                        <span class="badge bg-success fs-6">${{ "%.2f"|format(income.amount) }}</span>
+                        <span class="badge bg-success amount">${{ "%.2f"|format(income.amount) }}</span>
                     </li>
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="text-center text-muted py-4 mb-0">No income recorded yet</p>
+                <div class="empty-state">
+                    <i class="bi bi-arrow-up-circle"></i>
+                    <p class="mb-0">No income recorded yet</p>
+                </div>
                 {% endif %}
             </div>
-            <div class="card-footer bg-white">
-                <a href="{{ url_for('income_list') }}" class="text-primary text-decoration-none">View all income <i class="bi bi-arrow-right"></i></a>
+            <div class="card-footer">
+                <a href="{{ url_for('income_list') }}" class="text-muted">View all income <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
@@ -62,7 +94,7 @@
     <div class="col-12 col-lg-6">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-cart text-danger me-2"></i>Recent Expenses</span>
+                <span><i class="bi bi-arrow-down-circle text-danger me-2"></i>Recent Expenses</span>
                 <a href="{{ url_for('expense_add') }}" class="btn btn-sm btn-danger"><i class="bi bi-plus"></i> Add</a>
             </div>
             <div class="card-body p-0">
@@ -72,41 +104,63 @@
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
                             <strong>{{ expense.description }}</strong>
+                            {% if expense.folder %}
+                            <span class="folder-color" style="background-color: {{ expense.folder.color }};"></span>
+                            {% endif %}
                             <br><small class="text-muted">{{ expense.category }} - {{ expense.date.strftime('%b %d, %Y') }}</small>
                         </div>
-                        <span class="badge bg-danger fs-6">${{ "%.2f"|format(expense.amount) }}</span>
+                        <span class="badge bg-danger amount">${{ "%.2f"|format(expense.amount) }}</span>
                     </li>
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="text-center text-muted py-4 mb-0">No expenses recorded yet</p>
+                <div class="empty-state">
+                    <i class="bi bi-arrow-down-circle"></i>
+                    <p class="mb-0">No expenses recorded yet</p>
+                </div>
                 {% endif %}
             </div>
-            <div class="card-footer bg-white">
-                <a href="{{ url_for('expense_list') }}" class="text-primary text-decoration-none">View all expenses <i class="bi bi-arrow-right"></i></a>
+            <div class="card-footer">
+                <a href="{{ url_for('expense_list') }}" class="text-muted">View all expenses <i class="bi bi-arrow-right"></i></a>
             </div>
         </div>
     </div>
 </div>
 
 <div class="row g-4 mt-2">
-    <div class="col-12 col-lg-6">
+    <div class="col-6 col-lg-3">
         <div class="card">
             <div class="card-body text-center py-4">
-                <i class="bi bi-key text-primary" style="font-size: 2rem;"></i>
-                <h5 class="mt-2">Credentials</h5>
-                <p class="text-muted mb-3">Store your passwords securely</p>
-                <a href="{{ url_for('credential_list') }}" class="btn btn-outline-primary">Manage Credentials</a>
+                <i class="bi bi-folder text-primary" style="font-size: 1.75rem;"></i>
+                <h6 class="mt-2 mb-0">Folders</h6>
+                <a href="{{ url_for('folder_list') }}" class="stretched-link"></a>
             </div>
         </div>
     </div>
-    <div class="col-12 col-lg-6">
+    <div class="col-6 col-lg-3">
         <div class="card">
             <div class="card-body text-center py-4">
-                <i class="bi bi-link-45deg text-primary" style="font-size: 2rem;"></i>
-                <h5 class="mt-2">Links</h5>
-                <p class="text-muted mb-3">Save your important links</p>
-                <a href="{{ url_for('link_list') }}" class="btn btn-outline-primary">Manage Links</a>
+                <i class="bi bi-people text-primary" style="font-size: 1.75rem;"></i>
+                <h6 class="mt-2 mb-0">Clients</h6>
+                <a href="{{ url_for('client_list') }}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-key text-primary" style="font-size: 1.75rem;"></i>
+                <h6 class="mt-2 mb-0">Credentials</h6>
+                <a href="{{ url_for('credential_list') }}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-link-45deg text-primary" style="font-size: 1.75rem;"></i>
+                <h6 class="mt-2 mb-0">Links</h6>
+                <a href="{{ url_for('link_list') }}" class="stretched-link"></a>
             </div>
         </div>
     </div>
