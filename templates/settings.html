@@ -58,6 +58,32 @@
         </div>
     </div>
 
+    <!-- Currency Settings -->
+    <div class="col-lg-6">
+        <div class="game-card">
+            <div class="game-card-header">
+                <h5 class="mb-0"><i class="bi bi-currency-exchange me-2"></i>Currency</h5>
+            </div>
+            <div class="game-card-body">
+                <form method="POST" action="{{ url_for('settings_currency') }}">
+                    <div class="mb-3">
+                        <label for="currency" class="form-label">Display Currency</label>
+                        <select class="form-select" id="currency" name="currency">
+                            {% set user_currency = current_user.currency|default('PHP') %}
+                            {% for code, info in currencies.items() %}
+                            <option value="{{ code }}" {{ 'selected' if code == user_currency }}>
+                                {{ info.symbol }} - {{ info.name }} ({{ code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Currency symbol shown throughout the app</small>
+                    </div>
+                    <button type="submit" class="btn btn-game"><i class="bi bi-check-lg me-1"></i> Save Currency</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Password Change -->
     <div class="col-lg-6">
         <div class="game-card">

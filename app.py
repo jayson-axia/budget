@@ -74,6 +74,82 @@ def delete_upload(filename, subfolder):
             os.remove(filepath)
 
 
+# Currency configuration (PHP and USD prioritized)
+CURRENCIES = {
+    # Prioritized
+    'PHP': {'name': 'Philippine Peso', 'symbol': '₱'},
+    'USD': {'name': 'US Dollar', 'symbol': '$'},
+    # Major currencies
+    'EUR': {'name': 'Euro', 'symbol': '€'},
+    'GBP': {'name': 'British Pound', 'symbol': '£'},
+    'JPY': {'name': 'Japanese Yen', 'symbol': '¥'},
+    'CNY': {'name': 'Chinese Yuan', 'symbol': '¥'},
+    'KRW': {'name': 'South Korean Won', 'symbol': '₩'},
+    'INR': {'name': 'Indian Rupee', 'symbol': '₹'},
+    'AUD': {'name': 'Australian Dollar', 'symbol': 'A$'},
+    'CAD': {'name': 'Canadian Dollar', 'symbol': 'C$'},
+    'SGD': {'name': 'Singapore Dollar', 'symbol': 'S$'},
+    'HKD': {'name': 'Hong Kong Dollar', 'symbol': 'HK$'},
+    'MYR': {'name': 'Malaysian Ringgit', 'symbol': 'RM'},
+    'THB': {'name': 'Thai Baht', 'symbol': '฿'},
+    'IDR': {'name': 'Indonesian Rupiah', 'symbol': 'Rp'},
+    'VND': {'name': 'Vietnamese Dong', 'symbol': '₫'},
+    'TWD': {'name': 'Taiwan Dollar', 'symbol': 'NT$'},
+    'NZD': {'name': 'New Zealand Dollar', 'symbol': 'NZ$'},
+    'CHF': {'name': 'Swiss Franc', 'symbol': 'CHF'},
+    'SEK': {'name': 'Swedish Krona', 'symbol': 'kr'},
+    'NOK': {'name': 'Norwegian Krone', 'symbol': 'kr'},
+    'DKK': {'name': 'Danish Krone', 'symbol': 'kr'},
+    'MXN': {'name': 'Mexican Peso', 'symbol': 'MX$'},
+    'BRL': {'name': 'Brazilian Real', 'symbol': 'R$'},
+    'ARS': {'name': 'Argentine Peso', 'symbol': 'AR$'},
+    'CLP': {'name': 'Chilean Peso', 'symbol': 'CL$'},
+    'COP': {'name': 'Colombian Peso', 'symbol': 'CO$'},
+    'PEN': {'name': 'Peruvian Sol', 'symbol': 'S/'},
+    'ZAR': {'name': 'South African Rand', 'symbol': 'R'},
+    'AED': {'name': 'UAE Dirham', 'symbol': 'د.إ'},
+    'SAR': {'name': 'Saudi Riyal', 'symbol': '﷼'},
+    'QAR': {'name': 'Qatari Riyal', 'symbol': 'QR'},
+    'KWD': {'name': 'Kuwaiti Dinar', 'symbol': 'KD'},
+    'BHD': {'name': 'Bahraini Dinar', 'symbol': 'BD'},
+    'OMR': {'name': 'Omani Rial', 'symbol': 'OMR'},
+    'EGP': {'name': 'Egyptian Pound', 'symbol': 'E£'},
+    'TRY': {'name': 'Turkish Lira', 'symbol': '₺'},
+    'RUB': {'name': 'Russian Ruble', 'symbol': '₽'},
+    'PLN': {'name': 'Polish Zloty', 'symbol': 'zł'},
+    'CZK': {'name': 'Czech Koruna', 'symbol': 'Kč'},
+    'HUF': {'name': 'Hungarian Forint', 'symbol': 'Ft'},
+    'RON': {'name': 'Romanian Leu', 'symbol': 'lei'},
+    'BGN': {'name': 'Bulgarian Lev', 'symbol': 'лв'},
+    'HRK': {'name': 'Croatian Kuna', 'symbol': 'kn'},
+    'ISK': {'name': 'Icelandic Krona', 'symbol': 'kr'},
+    'ILS': {'name': 'Israeli Shekel', 'symbol': '₪'},
+    'PKR': {'name': 'Pakistani Rupee', 'symbol': '₨'},
+    'BDT': {'name': 'Bangladeshi Taka', 'symbol': '৳'},
+    'LKR': {'name': 'Sri Lankan Rupee', 'symbol': 'Rs'},
+    'NPR': {'name': 'Nepalese Rupee', 'symbol': 'रू'},
+    'MMK': {'name': 'Myanmar Kyat', 'symbol': 'K'},
+    'KHR': {'name': 'Cambodian Riel', 'symbol': '៛'},
+    'LAK': {'name': 'Lao Kip', 'symbol': '₭'},
+    'BND': {'name': 'Brunei Dollar', 'symbol': 'B$'},
+    'NGN': {'name': 'Nigerian Naira', 'symbol': '₦'},
+    'KES': {'name': 'Kenyan Shilling', 'symbol': 'KSh'},
+    'GHS': {'name': 'Ghanaian Cedi', 'symbol': 'GH₵'},
+    'XOF': {'name': 'West African CFA', 'symbol': 'CFA'},
+    'XAF': {'name': 'Central African CFA', 'symbol': 'FCFA'},
+    'MAD': {'name': 'Moroccan Dirham', 'symbol': 'MAD'},
+    'TND': {'name': 'Tunisian Dinar', 'symbol': 'DT'},
+    'JOD': {'name': 'Jordanian Dinar', 'symbol': 'JD'},
+    'LBP': {'name': 'Lebanese Pound', 'symbol': 'L£'},
+    'UAH': {'name': 'Ukrainian Hryvnia', 'symbol': '₴'},
+    'BTC': {'name': 'Bitcoin', 'symbol': '₿'},
+}
+
+def get_currency_symbol(code):
+    """Get currency symbol from code."""
+    return CURRENCIES.get(code, {}).get('symbol', code)
+
+
 # Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -81,6 +157,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     display_name = db.Column(db.String(100))
     theme = db.Column(db.String(10), default='dark')
+    currency = db.Column(db.String(3), default='PHP')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     incomes = db.relationship('Income', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -216,6 +293,18 @@ class Link(db.Model):
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+@app.context_processor
+def inject_currency():
+    """Make currency symbol available in all templates."""
+    if current_user.is_authenticated:
+        currency_code = current_user.currency or 'PHP'
+        return {
+            'currency_symbol': get_currency_symbol(currency_code),
+            'currency_code': currency_code
+        }
+    return {'currency_symbol': '₱', 'currency_code': 'PHP'}
 
 
 # Activity logging helper
@@ -957,7 +1046,7 @@ def settings():
         db.session.commit()
         flash('Settings updated!', 'success')
         return redirect(url_for('settings'))
-    return render_template('settings.html')
+    return render_template('settings.html', currencies=CURRENCIES)
 
 
 @app.route('/settings/password', methods=['POST'])
@@ -992,6 +1081,17 @@ def settings_theme():
     if theme in ['dark', 'light']:
         current_user.theme = theme
         db.session.commit()
+    return redirect(url_for('settings'))
+
+
+@app.route('/settings/currency', methods=['POST'])
+@login_required
+def settings_currency():
+    currency = request.form.get('currency', 'PHP')
+    if currency in CURRENCIES:
+        current_user.currency = currency
+        db.session.commit()
+        flash(f'Currency changed to {CURRENCIES[currency]["name"]}', 'success')
     return redirect(url_for('settings'))
 
 
@@ -1210,6 +1310,7 @@ def run_migrations():
     # User table columns
     add_column('user', 'display_name', 'VARCHAR(100)')
     add_column('user', 'theme', 'VARCHAR(10)', 'dark')
+    add_column('user', 'currency', 'VARCHAR(3)', 'PHP')
 
     # Transaction image columns
     add_column('income', 'image_filename', 'VARCHAR(255)')

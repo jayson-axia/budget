@@ -60,7 +60,7 @@
                         <span>{{ log.description or 'No description' }}</span>
                         {% if log.amount %}
                         <span class="amount ms-2 {% if log.entity_type == 'income' %}amount-income{% else %}amount-expense{% endif %}">
-                            ${{ "%.2f"|format(log.amount) }}
+                            {{ currency_symbol }}{{ "%.2f"|format(log.amount) }}
                         </span>
                         {% endif %}
                     </div>

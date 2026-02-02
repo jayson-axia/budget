@@ -16,7 +16,7 @@
     <div class="d-flex justify-content-between align-items-center">
         <div>
             <div class="stat-label"><i class="bi bi-coin me-1"></i> Total Income</div>
-            <h3 class="amount">${{ "%.2f"|format(total) }}</h3>
+            <h3 class="amount">{{ currency_symbol }}{{ "%.2f"|format(total) }}</h3>
         </div>
         <div class="text-end">
             <span class="text-muted">{{ incomes|length }} transaction{{ 's' if incomes|length != 1 }}</span>
@@ -65,7 +65,7 @@
                         </td>
                         <td>{{ income.date.strftime('%b %d, %Y') }}</td>
                         <td class="text-end">
-                            <span class="amount amount-income">+${{ "%.2f"|format(income.amount) }}</span>
+                            <span class="amount amount-income">+{{ currency_symbol }}{{ "%.2f"|format(income.amount) }}</span>
                         </td>
                         <td class="text-end">
                             <a href="{{ url_for('income_edit', id=income.id) }}" class="btn btn-sm btn-outline-game me-1"><i class="bi bi-pencil"></i></a>

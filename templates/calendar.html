@@ -131,19 +131,19 @@
     <div class="col-4">
         <div class="stat-box income">
             <div class="stat-label"><i class="bi bi-arrow-up-circle"></i> Income</div>
-            <h3 class="amount" id="total-income">$0.00</h3>
+            <h3 class="amount" id="total-income">{{ currency_symbol }}0.00</h3>
         </div>
     </div>
     <div class="col-4">
         <div class="stat-box expense">
             <div class="stat-label"><i class="bi bi-arrow-down-circle"></i> Expenses</div>
-            <h3 class="amount" id="total-expenses">$0.00</h3>
+            <h3 class="amount" id="total-expenses">{{ currency_symbol }}0.00</h3>
         </div>
     </div>
     <div class="col-4">
         <div class="stat-box balance">
             <div class="stat-label"><i class="bi bi-trophy"></i> Balance</div>
-            <h3 class="amount" id="total-balance">$0.00</h3>
+            <h3 class="amount" id="total-balance">{{ currency_symbol }}0.00</h3>
         </div>
     </div>
 </div>
@@ -181,6 +181,7 @@
 <script>
 const year = {{ year }};
 const month = {{ month }};
+const currencySymbol = '{{ currency_symbol }}';
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 document.getElementById('month-title').textContent = `${months[month-1]} ${year}`;
@@ -192,9 +193,9 @@ async function loadCalendar() {
     const data = await res.json();
     calendarData = data;
 
-    document.getElementById('total-income').textContent = `$${data.total_income.toFixed(2)}`;
-    document.getElementById('total-expenses').textContent = `$${data.total_expenses.toFixed(2)}`;
-    document.getElementById('total-balance').textContent = `$${data.balance.toFixed(2)}`;
+    document.getElementById('total-income').textContent = `${currencySymbol}${data.total_income.toFixed(2)}`;
+    document.getElementById('total-expenses').textContent = `${currencySymbol}${data.total_expenses.toFixed(2)}`;
+    document.getElementById('total-balance').textContent = `${currencySymbol}${data.balance.toFixed(2)}`;
 
     renderCalendar(data);
 }
@@ -239,12 +240,12 @@ function renderCalendar(data) {
 
             if (dayData.income.length > 0) {
                 const incomeTotal = dayData.income.reduce((sum, i) => sum + i.amount, 0);
-                html += `<div class="day-income"><span class="day-dot income"></span>+$${incomeTotal.toFixed(0)}</div>`;
+                html += `<div class="day-income"><span class="day-dot income"></span>+${currencySymbol}${incomeTotal.toFixed(0)}</div>`;
             }
 
             if (dayData.expenses.length > 0) {
                 const expenseTotal = dayData.expenses.reduce((sum, e) => sum + e.amount, 0);
-                html += `<div class="day-expense"><span class="day-dot expense"></span>-$${expenseTotal.toFixed(0)}</div>`;
+                html += `<div class="day-expense"><span class="day-dot expense"></span>-${currencySymbol}${expenseTotal.toFixed(0)}</div>`;
             }
 
             html += '</div>';
@@ -270,7 +271,7 @@ function showDayDetails(day, data) {
         data.income.forEach(i => {
             html += `<li class="list-group-item d-flex justify-content-between" style="background: transparent; border-color: var(--card-border);">
                 <span>${i.source}</span>
-                <span class="amount amount-income">+$${i.amount.toFixed(2)}</span>
+                <span class="amount amount-income">+${currencySymbol}${i.amount.toFixed(2)}</span>
             </li>`;
         });
         html += '</ul>';
@@ -285,7 +286,7 @@ function showDayDetails(day, data) {
                     <span>${e.description}</span>
                     <br><small class="text-muted">${e.category || 'Uncategorized'}</small>
                 </div>
-                <span class="amount amount-expense">-$${e.amount.toFixed(2)}</span>
+                <span class="amount amount-expense">-${currencySymbol}${e.amount.toFixed(2)}</span>
             </li>`;
         });
         html += '</ul>';
