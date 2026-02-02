@@ -73,52 +73,104 @@
     </div>
 </div>
 
-<div class="game-card">
+<div class="game-card mb-4">
     <div class="game-card-header">
         <i class="bi bi-book me-2"></i>API Documentation
     </div>
     <div class="game-card-body">
-        <h6 style="color: var(--neon-green);"><i class="bi bi-arrow-up-circle me-2"></i>Add Income via API</h6>
-        <p class="text-muted mb-3">Use this endpoint to add income from external tools like n8n, Zapier, or custom scripts.</p>
+        <p class="text-muted mb-4">All endpoints require the <code style="color: var(--neon-blue);">X-API-Key</code> header with your API key.</p>
 
-        <div class="mb-3">
-            <label class="form-label small text-muted">Endpoint</label>
-            <code class="d-block p-2 rounded" style="background: rgba(0, 255, 136, 0.1); color: var(--neon-green); border: 1px solid rgba(0, 255, 136, 0.2);">POST /api/v1/income</code>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label small text-muted">Headers</label>
-            <pre class="p-2 rounded mb-0" style="background: var(--card-bg); border: 1px solid var(--card-border); color: #fff;">Content-Type: application/json
-X-API-Key: your-api-key-here</pre>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label small text-muted">Request Body</label>
-            <pre class="p-2 rounded mb-0" style="background: var(--card-bg); border: 1px solid var(--card-border); color: #fff;">{
-  "name": "Freelance Project",
-  "amount": 500.00,
-  "category": "Freelance",      // optional, auto-creates if not exists
-  "client": "Client Name",      // optional, auto-creates if not exists
-  "date": "2024-01-15",         // optional, defaults to today
-  "notes": "Payment for..."     // optional
-}</pre>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label small text-muted">Success Response</label>
-            <pre class="p-2 rounded mb-0" style="background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.2); color: var(--neon-green);">{
-  "success": true,
-  "income_id": 123,
-  "message": "Income added successfully"
-}</pre>
-        </div>
-
-        <div>
-            <label class="form-label small text-muted">Example cURL</label>
-            <pre class="p-2 rounded mb-0" style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--neon-blue);">curl -X POST {{ request.host_url }}api/v1/income \
+        <!-- Add Income -->
+        <div class="mb-4 pb-4" style="border-bottom: 1px solid var(--border-color);">
+            <h6 style="color: var(--neon-green);"><i class="bi bi-arrow-up-circle me-2"></i>Add Income</h6>
+            <code class="d-block p-2 rounded mb-3" style="background: rgba(0, 255, 136, 0.1); color: var(--neon-green); border: 1px solid rgba(0, 255, 136, 0.2);">POST /api/v1/income</code>
+            <table class="table table-sm mb-3">
+                <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>name</code></td><td>Yes</td><td>Income source name</td></tr>
+                    <tr><td><code>amount</code></td><td>Yes</td><td>Amount (number)</td></tr>
+                    <tr><td><code>date</code></td><td>No</td><td>YYYY-MM-DD (defaults to today)</td></tr>
+                    <tr><td><code>category</code></td><td>No</td><td>Category name (auto-creates)</td></tr>
+                    <tr><td><code>client</code></td><td>No</td><td>Client name (auto-creates)</td></tr>
+                    <tr><td><code>notes</code></td><td>No</td><td>Additional notes</td></tr>
+                </tbody>
+            </table>
+            <pre class="p-2 rounded mb-0" style="background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.8rem;">curl -X POST {{ request.host_url }}api/v1/income \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_KEY" \
-  -d '{"name": "Test Income", "amount": 100}'</pre>
+  -d '{"name": "Salary", "amount": 50000}'</pre>
+        </div>
+
+        <!-- Add Expense -->
+        <div class="mb-4 pb-4" style="border-bottom: 1px solid var(--border-color);">
+            <h6 style="color: var(--neon-red);"><i class="bi bi-arrow-down-circle me-2"></i>Add Expense</h6>
+            <code class="d-block p-2 rounded mb-3" style="background: rgba(255, 71, 87, 0.1); color: var(--neon-red); border: 1px solid rgba(255, 71, 87, 0.2);">POST /api/v1/expense</code>
+            <table class="table table-sm mb-3">
+                <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>name</code></td><td>Yes</td><td>Expense description</td></tr>
+                    <tr><td><code>amount</code></td><td>Yes</td><td>Amount (number)</td></tr>
+                    <tr><td><code>date</code></td><td>No</td><td>YYYY-MM-DD (defaults to today)</td></tr>
+                    <tr><td><code>category</code></td><td>No</td><td>Category name (auto-creates)</td></tr>
+                    <tr><td><code>notes</code></td><td>No</td><td>Additional notes</td></tr>
+                </tbody>
+            </table>
+            <pre class="p-2 rounded mb-0" style="background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.8rem;">curl -X POST {{ request.host_url }}api/v1/expense \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_KEY" \
+  -d '{"name": "Groceries", "amount": 1500, "category": "Food"}'</pre>
+        </div>
+
+        <!-- Add Bank Account -->
+        <div class="mb-4 pb-4" style="border-bottom: 1px solid var(--border-color);">
+            <h6 style="color: var(--neon-purple);"><i class="bi bi-bank me-2"></i>Add Bank Account</h6>
+            <code class="d-block p-2 rounded mb-3" style="background: rgba(168, 85, 247, 0.1); color: var(--neon-purple); border: 1px solid rgba(168, 85, 247, 0.2);">POST /api/v1/bank</code>
+            <table class="table table-sm mb-3">
+                <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>name</code></td><td>Yes</td><td>Bank/account name</td></tr>
+                    <tr><td><code>balance</code></td><td>No</td><td>Initial balance (defaults to 0)</td></tr>
+                    <tr><td><code>icon</code></td><td>No</td><td>Icon name (defaults to "bank")</td></tr>
+                    <tr><td><code>color</code></td><td>No</td><td>Hex color (defaults to #6366f1)</td></tr>
+                    <tr><td><code>notes</code></td><td>No</td><td>Additional notes</td></tr>
+                </tbody>
+            </table>
+            <pre class="p-2 rounded mb-0" style="background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.8rem;">curl -X POST {{ request.host_url }}api/v1/bank \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_KEY" \
+  -d '{"name": "BDO Savings", "balance": 50000}'</pre>
+        </div>
+
+        <!-- List Banks -->
+        <div class="mb-4 pb-4" style="border-bottom: 1px solid var(--border-color);">
+            <h6 style="color: var(--neon-blue);"><i class="bi bi-list-ul me-2"></i>List Bank Accounts</h6>
+            <code class="d-block p-2 rounded mb-3" style="background: rgba(0, 212, 255, 0.1); color: var(--neon-blue); border: 1px solid rgba(0, 212, 255, 0.2);">GET /api/v1/banks</code>
+            <p class="text-muted small mb-2">Returns all your bank accounts with their IDs and balances.</p>
+            <pre class="p-2 rounded mb-0" style="background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.8rem;">curl {{ request.host_url }}api/v1/banks \
+  -H "X-API-Key: YOUR_KEY"</pre>
+        </div>
+
+        <!-- Adjust Balance -->
+        <div>
+            <h6 style="color: var(--neon-yellow);"><i class="bi bi-plus-slash-minus me-2"></i>Adjust Bank Balance</h6>
+            <code class="d-block p-2 rounded mb-3" style="background: rgba(255, 217, 61, 0.1); color: var(--neon-yellow); border: 1px solid rgba(255, 217, 61, 0.2);">POST /api/v1/bank/{id}/adjust</code>
+            <table class="table table-sm mb-3">
+                <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>amount</code></td><td>Yes</td><td>Positive to add, negative to subtract</td></tr>
+                </tbody>
+            </table>
+            <p class="text-muted small mb-2">Get the bank ID from the "List Banks" endpoint.</p>
+            <pre class="p-2 rounded mb-2" style="background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.8rem;"># Add 1000 to bank ID 1
+curl -X POST {{ request.host_url }}api/v1/bank/1/adjust \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_KEY" \
+  -d '{"amount": 1000}'</pre>
+            <pre class="p-2 rounded mb-0" style="background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.8rem;"># Subtract 500 from bank ID 1
+curl -X POST {{ request.host_url }}api/v1/bank/1/adjust \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_KEY" \
+  -d '{"amount": -500}'</pre>
         </div>
     </div>
 </div>
