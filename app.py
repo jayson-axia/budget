@@ -1178,9 +1178,31 @@ def link_delete(id):
     return redirect(url_for('link_list'))
 
 
+# Database migration helper
+def add_column_if_not_exists(table, column, column_type):
+    """Add a column to a table if it doesn't exist."""
+    from sqlalchemy import inspect, text
+    inspector = inspect(db.engine)
+    columns = [c['name'] for c in inspector.get_columns(table)]
+    if column not in columns:
+        with db.engine.connect() as conn:
+            conn.execute(text(f'ALTER TABLE {table} ADD COLUMN {column} {column_type}'))
+            conn.commit()
+
+
 # Initialize database
 with app.app_context():
     db.create_all()
+
+    # Run migrations for new columns
+    try:
+        add_column_if_not_exists('user', 'display_name', 'VARCHAR(100)')
+        add_column_if_not_exists('user', 'theme', "VARCHAR(10) DEFAULT 'dark'")
+        add_column_if_not_exists('income', 'image_filename', 'VARCHAR(255)')
+        add_column_if_not_exists('expense', 'image_filename', 'VARCHAR(255)')
+        add_column_if_not_exists('bank_account', 'image_filename', 'VARCHAR(255)')
+    except Exception as e:
+        print(f"Migration note: {e}")
 
 
 if __name__ == '__main__':
