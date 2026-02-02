@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from cryptography.fernet import Fernet
 import base64
 
@@ -50,11 +51,36 @@ def decrypt_data(data):
     return data
 
 
+# File upload configuration
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_upload(file, subfolder):
+    if file and file.filename and allowed_file(file.filename):
+        filename = secure_filename(f"{datetime.utcnow().timestamp()}_{file.filename}")
+        folder_path = os.path.join(UPLOAD_FOLDER, subfolder)
+        os.makedirs(folder_path, exist_ok=True)
+        file.save(os.path.join(folder_path, filename))
+        return filename
+    return None
+
+def delete_upload(filename, subfolder):
+    if filename:
+        filepath = os.path.join(UPLOAD_FOLDER, subfolder, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+
 # Models
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    display_name = db.Column(db.String(100))
+    theme = db.Column(db.String(10), default='dark')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     incomes = db.relationship('Income', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -99,6 +125,7 @@ class BankAccount(db.Model):
     icon = db.Column(db.String(50), default='bank')
     color = db.Column(db.String(7), default='#6366f1')
     notes = db.Column(db.Text)
+    image_filename = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -143,6 +170,7 @@ class Income(db.Model):
     notes = db.Column(db.Text)
     category_id = db.Column(db.Integer, db.ForeignKey('income_category.id'), nullable=True)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
+    image_filename = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -154,6 +182,7 @@ class Expense(db.Model):
     date = db.Column(db.Date, nullable=False)
     notes = db.Column(db.Text)
     category_id = db.Column(db.Integer, db.ForeignKey('expense_category.id'), nullable=True)
+    image_filename = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -279,10 +308,6 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
 
-    if User.query.count() > 0:
-        flash('Registration is closed. This is a single-user app.', 'error')
-        return redirect(url_for('login'))
-
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -397,6 +422,10 @@ def income_add():
         category_id = request.form.get('category_id')
         client_id = request.form.get('client_id')
 
+        image_filename = None
+        if 'image' in request.files:
+            image_filename = save_upload(request.files['image'], 'income')
+
         income = Income(
             user_id=current_user.id,
             source=request.form.get('source'),
@@ -404,7 +433,8 @@ def income_add():
             date=datetime.strptime(request.form.get('date'), '%Y-%m-%d').date(),
             notes=request.form.get('notes'),
             category_id=int(category_id) if category_id else None,
-            client_id=int(client_id) if client_id else None
+            client_id=int(client_id) if client_id else None,
+            image_filename=image_filename
         )
         db.session.add(income)
         db.session.commit()
@@ -427,6 +457,15 @@ def income_edit(id):
     if request.method == 'POST':
         category_id = request.form.get('category_id')
         client_id = request.form.get('client_id')
+
+        if 'image' in request.files and request.files['image'].filename:
+            if income.image_filename:
+                delete_upload(income.image_filename, 'income')
+            income.image_filename = save_upload(request.files['image'], 'income')
+
+        if request.form.get('remove_image'):
+            delete_upload(income.image_filename, 'income')
+            income.image_filename = None
 
         income.source = request.form.get('source')
         income.amount = float(request.form.get('amount'))
@@ -451,6 +490,9 @@ def income_delete(id):
 
     log_activity(current_user.id, 'deleted', 'income', income.id,
                 f'Deleted: {income.source}', income.amount)
+
+    if income.image_filename:
+        delete_upload(income.image_filename, 'income')
 
     db.session.delete(income)
     db.session.commit()
@@ -526,13 +568,18 @@ def expense_add():
     if request.method == 'POST':
         category_id = request.form.get('category_id')
 
+        image_filename = None
+        if 'image' in request.files:
+            image_filename = save_upload(request.files['image'], 'expenses')
+
         expense = Expense(
             user_id=current_user.id,
             description=request.form.get('description'),
             amount=float(request.form.get('amount')),
             date=datetime.strptime(request.form.get('date'), '%Y-%m-%d').date(),
             notes=request.form.get('notes'),
-            category_id=int(category_id) if category_id else None
+            category_id=int(category_id) if category_id else None,
+            image_filename=image_filename
         )
         db.session.add(expense)
         db.session.commit()
@@ -553,6 +600,15 @@ def expense_edit(id):
 
     if request.method == 'POST':
         category_id = request.form.get('category_id')
+
+        if 'image' in request.files and request.files['image'].filename:
+            if expense.image_filename:
+                delete_upload(expense.image_filename, 'expenses')
+            expense.image_filename = save_upload(request.files['image'], 'expenses')
+
+        if request.form.get('remove_image'):
+            delete_upload(expense.image_filename, 'expenses')
+            expense.image_filename = None
 
         expense.description = request.form.get('description')
         expense.amount = float(request.form.get('amount'))
@@ -576,6 +632,9 @@ def expense_delete(id):
 
     log_activity(current_user.id, 'deleted', 'expense', expense.id,
                 f'Deleted: {expense.description}', expense.amount)
+
+    if expense.image_filename:
+        delete_upload(expense.image_filename, 'expenses')
 
     db.session.delete(expense)
     db.session.commit()
@@ -646,13 +705,18 @@ def balance_list():
 @login_required
 def balance_add():
     if request.method == 'POST':
+        image_filename = None
+        if 'image' in request.files:
+            image_filename = save_upload(request.files['image'], 'banks')
+
         account = BankAccount(
             user_id=current_user.id,
             name=request.form.get('name'),
             balance=float(request.form.get('balance', 0)),
             icon=request.form.get('icon', 'bank'),
             color=request.form.get('color', '#6366f1'),
-            notes=request.form.get('notes')
+            notes=request.form.get('notes'),
+            image_filename=image_filename
         )
         db.session.add(account)
         db.session.commit()
@@ -670,6 +734,15 @@ def balance_add():
 def balance_edit(id):
     account = BankAccount.query.filter_by(id=id, user_id=current_user.id).first_or_404()
     if request.method == 'POST':
+        if 'image' in request.files and request.files['image'].filename:
+            if account.image_filename:
+                delete_upload(account.image_filename, 'banks')
+            account.image_filename = save_upload(request.files['image'], 'banks')
+
+        if request.form.get('remove_image'):
+            delete_upload(account.image_filename, 'banks')
+            account.image_filename = None
+
         account.name = request.form.get('name')
         account.balance = float(request.form.get('balance', 0))
         account.icon = request.form.get('icon', 'bank')
@@ -692,6 +765,9 @@ def balance_delete(id):
 
     log_activity(current_user.id, 'deleted', 'bank_account', account.id,
                 f'Deleted bank: {account.name}', account.balance)
+
+    if account.image_filename:
+        delete_upload(account.image_filename, 'banks')
 
     db.session.delete(account)
     db.session.commit()
@@ -870,6 +946,53 @@ def api_key_delete(id):
     db.session.commit()
     flash('API key revoked!', 'success')
     return redirect(url_for('api_settings'))
+
+
+# Settings routes
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    if request.method == 'POST':
+        current_user.display_name = request.form.get('display_name', '').strip() or None
+        db.session.commit()
+        flash('Settings updated!', 'success')
+        return redirect(url_for('settings'))
+    return render_template('settings.html')
+
+
+@app.route('/settings/password', methods=['POST'])
+@login_required
+def settings_password():
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+
+    if not check_password_hash(current_user.password_hash, current_password):
+        flash('Current password is incorrect', 'error')
+        return redirect(url_for('settings'))
+
+    if new_password != confirm_password:
+        flash('New passwords do not match', 'error')
+        return redirect(url_for('settings'))
+
+    if len(new_password) < 8:
+        flash('Password must be at least 8 characters', 'error')
+        return redirect(url_for('settings'))
+
+    current_user.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+    flash('Password changed successfully!', 'success')
+    return redirect(url_for('settings'))
+
+
+@app.route('/settings/theme', methods=['POST'])
+@login_required
+def settings_theme():
+    theme = request.form.get('theme', 'dark')
+    if theme in ['dark', 'light']:
+        current_user.theme = theme
+        db.session.commit()
+    return redirect(url_for('settings'))
 
 
 # External API endpoint

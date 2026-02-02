@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - BudgetQuest{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-gear me-2"></i>Settings</h4>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Settings -->
+    <div class="col-lg-6">
+        <div class="game-card">
+            <div class="game-card-header">
+                <h5 class="mb-0"><i class="bi bi-person me-2"></i>Profile</h5>
+            </div>
+            <div class="game-card-body">
+                <form method="POST" action="{{ url_for('settings') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" value="{{ current_user.username }}" disabled>
+                        <small class="text-muted">Username cannot be changed</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="display_name" class="form-label">Display Name</label>
+                        <input type="text" class="form-control" id="display_name" name="display_name" value="{{ current_user.display_name or '' }}" placeholder="Enter a display name">
+                        <small class="text-muted">Optional name shown in the app</small>
+                    </div>
+                    <button type="submit" class="btn btn-game"><i class="bi bi-check-lg me-1"></i> Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Settings -->
+    <div class="col-lg-6">
+        <div class="game-card">
+            <div class="game-card-header">
+                <h5 class="mb-0"><i class="bi bi-palette me-2"></i>Appearance</h5>
+            </div>
+            <div class="game-card-body">
+                <p class="text-muted mb-3">Choose your preferred theme</p>
+                <div class="d-flex gap-3">
+                    <form method="POST" action="{{ url_for('settings_theme') }}" class="flex-fill">
+                        <input type="hidden" name="theme" value="dark">
+                        <button type="submit" class="btn {{ 'btn-game' if current_user.theme == 'dark' else 'btn-outline-game' }} w-100">
+                            <i class="bi bi-moon-stars me-2"></i>Dark Mode
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('settings_theme') }}" class="flex-fill">
+                        <input type="hidden" name="theme" value="light">
+                        <button type="submit" class="btn {{ 'btn-game' if current_user.theme == 'light' else 'btn-outline-game' }} w-100">
+                            <i class="bi bi-sun me-2"></i>Light Mode
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Change -->
+    <div class="col-lg-6">
+        <div class="game-card">
+            <div class="game-card-header">
+                <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Change Password</h5>
+            </div>
+            <div class="game-card-body">
+                <form method="POST" action="{{ url_for('settings_password') }}">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+                        <small class="text-muted">Minimum 8 characters</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+                    </div>
+                    <button type="submit" class="btn btn-game"><i class="bi bi-key me-1"></i> Change Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="col-lg-6">
+        <div class="game-card">
+            <div class="game-card-header">
+                <h5 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Quick Links</h5>
+            </div>
+            <div class="game-card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('api_settings') }}" class="btn btn-outline-game text-start">
+                        <i class="bi bi-code-slash me-2"></i>API Keys
+                    </a>
+                    <a href="{{ url_for('income_categories') }}" class="btn btn-outline-game text-start">
+                        <i class="bi bi-tags me-2"></i>Income Categories
+                    </a>
+                    <a href="{{ url_for('expense_categories') }}" class="btn btn-outline-game text-start">
+                        <i class="bi bi-tags me-2"></i>Expense Categories
+                    </a>
+                    <a href="{{ url_for('activity_log') }}" class="btn btn-outline-game text-start">
+                        <i class="bi bi-clock-history me-2"></i>Activity Log
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4 text-muted small">
+    <p class="mb-1">Account created: {{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+</div>
+{% endblock %}
