@@ -1179,30 +1179,51 @@ def link_delete(id):
 
 
 # Database migration helper
-def add_column_if_not_exists(table, column, column_type):
-    """Add a column to a table if it doesn't exist."""
+def run_migrations():
+    """Add missing columns to existing tables."""
     from sqlalchemy import inspect, text
+
     inspector = inspect(db.engine)
-    columns = [c['name'] for c in inspector.get_columns(table)]
-    if column not in columns:
-        with db.engine.connect() as conn:
-            conn.execute(text(f'ALTER TABLE {table} ADD COLUMN {column} {column_type}'))
-            conn.commit()
+
+    def table_has_column(table, column):
+        try:
+            columns = [c['name'] for c in inspector.get_columns(table)]
+            return column in columns
+        except:
+            return True  # Assume exists if we can't check
+
+    def add_column(table, column, col_type, default=None):
+        if not table_has_column(table, column):
+            # Quote table name for PostgreSQL reserved words
+            quoted_table = f'"{table}"' if table == 'user' else table
+            sql = f'ALTER TABLE {quoted_table} ADD COLUMN {column} {col_type}'
+            if default is not None:
+                sql += f" DEFAULT '{default}'"
+            try:
+                with db.engine.connect() as conn:
+                    conn.execute(text(sql))
+                    conn.commit()
+                print(f"Added column {column} to {table}")
+            except Exception as e:
+                print(f"Column {column} on {table}: {e}")
+
+    # User table columns
+    add_column('user', 'display_name', 'VARCHAR(100)')
+    add_column('user', 'theme', 'VARCHAR(10)', 'dark')
+
+    # Transaction image columns
+    add_column('income', 'image_filename', 'VARCHAR(255)')
+    add_column('expense', 'image_filename', 'VARCHAR(255)')
+    add_column('bank_account', 'image_filename', 'VARCHAR(255)')
 
 
 # Initialize database
 with app.app_context():
     db.create_all()
-
-    # Run migrations for new columns
     try:
-        add_column_if_not_exists('user', 'display_name', 'VARCHAR(100)')
-        add_column_if_not_exists('user', 'theme', "VARCHAR(10) DEFAULT 'dark'")
-        add_column_if_not_exists('income', 'image_filename', 'VARCHAR(255)')
-        add_column_if_not_exists('expense', 'image_filename', 'VARCHAR(255)')
-        add_column_if_not_exists('bank_account', 'image_filename', 'VARCHAR(255)')
+        run_migrations()
     except Exception as e:
-        print(f"Migration note: {e}")
+        print(f"Migration error: {e}")
 
 
 if __name__ == '__main__':

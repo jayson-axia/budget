@@ -445,7 +445,7 @@
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{{ 'light-mode' if current_user.is_authenticated and current_user.theme == 'light' else '' }}">
+<body class="{{ 'light-mode' if current_user.is_authenticated and current_user.theme|default('dark') == 'light' else '' }}">
     {% if current_user.is_authenticated %}
     <nav class="navbar sticky-top">
         <div class="container">
