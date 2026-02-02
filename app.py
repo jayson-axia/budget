@@ -1165,6 +1165,155 @@ def api_add_income():
     })
 
 
+@app.route('/api/v1/expense', methods=['POST'])
+@require_api_key
+def api_add_expense():
+    data = request.get_json()
+
+    if not data:
+        return jsonify({'success': False, 'error': 'Invalid JSON'}), 400
+
+    name = data.get('name')
+    amount = data.get('amount')
+
+    if not name or amount is None:
+        return jsonify({'success': False, 'error': 'Missing required fields: name, amount'}), 400
+
+    try:
+        amount = float(amount)
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Invalid amount'}), 400
+
+    expense_date = date.today()
+    if data.get('date'):
+        try:
+            expense_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+
+    category_id = None
+    if data.get('category'):
+        category = ExpenseCategory.query.filter_by(
+            user_id=request.api_user_id,
+            name=data['category']
+        ).first()
+        if not category:
+            category = ExpenseCategory(user_id=request.api_user_id, name=data['category'])
+            db.session.add(category)
+            db.session.flush()
+        category_id = category.id
+
+    expense = Expense(
+        user_id=request.api_user_id,
+        description=name,
+        amount=amount,
+        date=expense_date,
+        notes=data.get('notes'),
+        category_id=category_id
+    )
+    db.session.add(expense)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'expense_id': expense.id,
+        'message': 'Expense added successfully'
+    })
+
+
+@app.route('/api/v1/bank', methods=['POST'])
+@require_api_key
+def api_add_bank():
+    data = request.get_json()
+
+    if not data:
+        return jsonify({'success': False, 'error': 'Invalid JSON'}), 400
+
+    name = data.get('name')
+
+    if not name:
+        return jsonify({'success': False, 'error': 'Missing required field: name'}), 400
+
+    balance = 0
+    if data.get('balance') is not None:
+        try:
+            balance = float(data['balance'])
+        except (ValueError, TypeError):
+            return jsonify({'success': False, 'error': 'Invalid balance'}), 400
+
+    account = BankAccount(
+        user_id=request.api_user_id,
+        name=name,
+        balance=balance,
+        icon=data.get('icon', 'bank'),
+        color=data.get('color', '#6366f1'),
+        notes=data.get('notes')
+    )
+    db.session.add(account)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'bank_id': account.id,
+        'message': 'Bank account added successfully'
+    })
+
+
+@app.route('/api/v1/bank/<int:id>/adjust', methods=['POST'])
+@require_api_key
+def api_adjust_balance(id):
+    """Add or subtract from bank balance. Use positive for add, negative for subtract."""
+    account = BankAccount.query.filter_by(id=id, user_id=request.api_user_id).first()
+
+    if not account:
+        return jsonify({'success': False, 'error': 'Bank account not found'}), 404
+
+    data = request.get_json()
+
+    if not data or data.get('amount') is None:
+        return jsonify({'success': False, 'error': 'Missing required field: amount'}), 400
+
+    try:
+        amount = float(data['amount'])
+    except (ValueError, TypeError):
+        return jsonify({'success': False, 'error': 'Invalid amount'}), 400
+
+    old_balance = account.balance
+    account.balance += amount
+    db.session.commit()
+
+    log_activity(request.api_user_id, 'updated', 'bank_account', account.id,
+                f'Balance adjusted: {old_balance:.2f} → {account.balance:.2f}', amount)
+
+    return jsonify({
+        'success': True,
+        'bank_id': account.id,
+        'old_balance': old_balance,
+        'new_balance': account.balance,
+        'adjustment': amount,
+        'message': 'Balance adjusted successfully'
+    })
+
+
+@app.route('/api/v1/banks', methods=['GET'])
+@require_api_key
+def api_list_banks():
+    """List all bank accounts for the user."""
+    accounts = BankAccount.query.filter_by(user_id=request.api_user_id).all()
+    return jsonify({
+        'success': True,
+        'banks': [
+            {
+                'id': a.id,
+                'name': a.name,
+                'balance': a.balance,
+                'icon': a.icon,
+                'color': a.color
+            } for a in accounts
+        ]
+    })
+
+
 # Credentials routes
 @app.route('/credentials')
 @login_required
