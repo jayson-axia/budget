@@ -437,7 +437,7 @@
         @media (max-width: 991px) {
             .bottom-nav { display: flex; }
             .desktop-nav { display: none !important; }
-            body { padding-bottom: 80px; }
+            body { padding-bottom: 88px; }
         }
 
         /* Empty State */
@@ -508,6 +508,12 @@
             right: 0;
             bottom: 0;
             z-index: 1001;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .mobile-more-menu.show {
@@ -520,7 +526,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
         }
 
         .mobile-more-panel {
@@ -529,46 +536,70 @@
             left: 0;
             right: 0;
             background: var(--bg-card);
-            border-top: 1px solid var(--border-color);
-            border-radius: 16px 16px 0 0;
-            padding: 1rem;
-            max-height: 60vh;
+            border-top: 2px solid var(--neon-blue);
+            box-shadow: 0 -4px 20px rgba(0, 212, 255, 0.2);
+            padding: 0;
+            max-height: 65vh;
             overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
         }
 
         .mobile-more-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 0.75rem;
-            margin-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-            font-size: 1.1rem;
+            padding: 1.25rem 1.25rem 1rem;
+            background: var(--bg-hover);
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--neon-blue);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .mobile-more-header button {
+            min-height: 44px;
+            min-width: 44px;
+            border-radius: 8px;
+        }
+
+        .mobile-more-links {
+            padding: 0.5rem 0;
         }
 
         .mobile-more-links a {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.875rem 0.5rem;
+            gap: 1rem;
+            padding: 1.125rem 1.25rem;
             color: var(--text-primary);
             text-decoration: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: background 0.2s;
+            font-size: 1.05rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .mobile-more-links a:hover,
         .mobile-more-links a:active {
             background: var(--bg-hover);
+            transform: scale(0.98);
         }
 
         .mobile-more-links a i {
-            font-size: 1.25rem;
-            width: 24px;
+            font-size: 1.5rem;
+            min-width: 32px;
             text-align: center;
             color: var(--neon-blue);
+        }
+
+        .mobile-more-links a:last-child {
+            border-bottom: none;
         }
 
         /* Mobile Responsive */
@@ -582,7 +613,7 @@
             }
 
             main.container {
-                padding: 1rem;
+                padding: 1.25rem;
             }
 
             /* Navbar */
@@ -593,15 +624,15 @@
 
             /* Stat boxes - better sizing for mobile */
             .stat-box {
-                padding: 1.25rem;
+                padding: 1.5rem;
             }
 
             .stat-box h3 {
-                font-size: 1.6rem;
+                font-size: 1.75rem;
             }
 
             .stat-label {
-                font-size: 0.85rem;
+                font-size: 0.9rem;
             }
 
             /* Page headers */
@@ -612,7 +643,15 @@
             }
 
             .page-header-flex h1 {
-                font-size: 1.6rem;
+                font-size: 1.75rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.25rem;
             }
 
             .page-header-flex .d-flex {
@@ -623,42 +662,46 @@
                 flex: 1;
             }
 
-            /* Buttons - MUCH larger touch targets */
+            /* Buttons - MASSIVE touch targets */
             .btn {
-                min-height: 52px;
-                font-size: 1rem;
-                padding: 0.75rem 1.25rem;
+                min-height: 56px;
+                font-size: 1.05rem;
+                padding: 0.875rem 1.5rem;
                 font-weight: 600;
             }
 
             .btn-sm {
-                min-height: 48px;
-                min-width: 48px;
-                padding: 0.625rem 1rem;
-                font-size: 0.95rem;
+                min-height: 52px;
+                min-width: 52px;
+                padding: 0.75rem 1.125rem;
+                font-size: 1rem;
             }
 
             .btn-lg {
-                min-height: 58px;
-                font-size: 1.15rem;
+                min-height: 64px;
+                font-size: 1.2rem;
             }
 
             /* Forms - prevent iOS zoom and better spacing */
             .form-control, .form-select {
-                min-height: 52px;
-                font-size: 16px;
-                padding: 0.875rem 1.25rem;
+                min-height: 56px;
+                font-size: 17px;
+                padding: 1rem 1.25rem;
             }
 
             .form-label {
-                font-size: 0.95rem;
-                margin-bottom: 0.5rem;
+                font-size: 1rem;
+                margin-bottom: 0.625rem;
                 font-weight: 600;
             }
 
             .input-group-text {
-                font-size: 16px;
-                padding: 0.875rem 1.25rem;
+                font-size: 17px;
+                padding: 1rem 1.25rem;
+            }
+
+            textarea.form-control {
+                min-height: 120px;
             }
 
             .mb-3 {
@@ -697,7 +740,7 @@
 
             .table-mobile-cards tbody tr {
                 display: block;
-                padding: 1.25rem 1rem;
+                padding: 1.5rem 1.25rem;
                 margin-bottom: 0.5rem;
                 border: 1px solid var(--border-color);
                 border-left: none;
@@ -710,14 +753,14 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 0.625rem 0;
+                padding: 0.75rem 0;
                 border-bottom: none;
-                font-size: 1rem;
+                font-size: 1.05rem;
             }
 
             .table-mobile-cards tbody td::before {
                 content: attr(data-label);
-                font-size: 0.8rem;
+                font-size: 0.85rem;
                 color: var(--text-muted);
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
@@ -728,8 +771,8 @@
 
             .table-mobile-cards tbody td:last-child {
                 justify-content: flex-end;
-                padding-top: 0.875rem;
-                margin-top: 0.625rem;
+                padding-top: 1rem;
+                margin-top: 0.75rem;
                 border-top: 1px solid var(--border-color);
             }
 
@@ -786,41 +829,45 @@
 
             /* Bottom nav improvements */
             .bottom-nav {
-                padding: 0.75rem 0;
-                height: 80px;
+                padding: 0.875rem 0;
+                height: 88px;
             }
 
             .bottom-nav a {
-                padding: 0.75rem 0.25rem;
-                font-size: 0.8rem;
+                padding: 0.875rem 0.25rem;
+                font-size: 0.85rem;
                 font-weight: 600;
             }
 
             .bottom-nav i {
-                font-size: 1.75rem;
-                margin-bottom: 5px;
+                font-size: 2rem;
+                margin-bottom: 6px;
             }
 
             /* Mobile more menu */
             .mobile-more-panel {
-                padding: 1.5rem 1rem;
-                bottom: 80px;
+                bottom: 88px;
             }
 
             .mobile-more-links a {
-                padding: 1.125rem 1rem;
-                font-size: 1.1rem;
+                padding: 1.375rem 1.5rem;
+                font-size: 1.15rem;
                 font-weight: 500;
             }
 
             .mobile-more-links a i {
-                font-size: 1.5rem;
+                font-size: 1.75rem;
+                min-width: 36px;
             }
 
             .mobile-more-header {
-                font-size: 1.2rem;
-                padding-bottom: 1rem;
-                margin-bottom: 1rem;
+                font-size: 1.3rem;
+                padding: 1.5rem 1.5rem 1.125rem;
+            }
+
+            .mobile-more-header button {
+                min-height: 48px;
+                min-width: 48px;
             }
 
             /* Dropdowns */
