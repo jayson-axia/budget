@@ -413,10 +413,10 @@
         .bottom-nav a {
             flex: 1;
             text-align: center;
-            padding: 0.75rem 0.25rem;
+            padding: 1rem 0.25rem;
             color: var(--text-muted);
             text-decoration: none;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             transition: all 0.3s;
         }
 
@@ -429,15 +429,15 @@
         }
 
         .bottom-nav i {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             display: block;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         @media (max-width: 991px) {
             .bottom-nav { display: flex; }
             .desktop-nav { display: none !important; }
-            body { padding-bottom: 70px; }
+            body { padding-bottom: 80px; }
         }
 
         /* Empty State */
@@ -573,40 +573,46 @@
 
         /* Mobile Responsive */
         @media (max-width: 767px) {
-            /* Container spacing */
+            /* Container spacing - full width on mobile */
             .container {
-                padding-left: 0.75rem;
-                padding-right: 0.75rem;
+                padding-left: 0;
+                padding-right: 0;
                 max-width: 100%;
+                margin: 0;
             }
 
             main.container {
-                padding-top: 1rem;
-                padding-bottom: 1rem;
+                padding: 1rem;
+            }
+
+            /* Navbar */
+            .navbar .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
             }
 
             /* Stat boxes - better sizing for mobile */
             .stat-box {
-                padding: 1rem;
+                padding: 1.25rem;
             }
 
             .stat-box h3 {
-                font-size: 1.4rem;
+                font-size: 1.6rem;
             }
 
             .stat-label {
-                font-size: 0.8rem;
+                font-size: 0.85rem;
             }
 
             /* Page headers */
             .page-header-flex {
                 flex-direction: column;
                 align-items: flex-start !important;
-                gap: 0.75rem;
+                gap: 1rem;
             }
 
             .page-header-flex h1 {
-                font-size: 1.5rem;
+                font-size: 1.6rem;
             }
 
             .page-header-flex .d-flex {
@@ -617,58 +623,63 @@
                 flex: 1;
             }
 
-            /* Buttons - larger touch targets */
+            /* Buttons - MUCH larger touch targets */
             .btn {
-                min-height: 46px;
-                font-size: 0.95rem;
-                padding: 0.625rem 1rem;
+                min-height: 52px;
+                font-size: 1rem;
+                padding: 0.75rem 1.25rem;
+                font-weight: 600;
             }
 
             .btn-sm {
-                min-height: 42px;
-                min-width: 42px;
-                padding: 0.5rem 0.75rem;
-                font-size: 0.875rem;
+                min-height: 48px;
+                min-width: 48px;
+                padding: 0.625rem 1rem;
+                font-size: 0.95rem;
             }
 
             .btn-lg {
-                min-height: 52px;
-                font-size: 1.1rem;
+                min-height: 58px;
+                font-size: 1.15rem;
             }
 
             /* Forms - prevent iOS zoom and better spacing */
             .form-control, .form-select {
-                min-height: 48px;
+                min-height: 52px;
                 font-size: 16px;
-                padding: 0.75rem 1rem;
+                padding: 0.875rem 1.25rem;
             }
 
             .form-label {
-                font-size: 0.9rem;
+                font-size: 0.95rem;
                 margin-bottom: 0.5rem;
+                font-weight: 600;
             }
 
             .input-group-text {
                 font-size: 16px;
-                padding: 0.75rem 1rem;
+                padding: 0.875rem 1.25rem;
             }
 
             .mb-3 {
-                margin-bottom: 1rem !important;
+                margin-bottom: 1.25rem !important;
             }
 
             /* Cards */
             .game-card {
                 margin-bottom: 1rem;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
             }
 
             .game-card-body {
-                padding: 1rem;
+                padding: 1.25rem 1rem;
             }
 
             .game-card-header {
-                padding: 0.875rem 1rem;
-                font-size: 1rem;
+                padding: 1rem;
+                font-size: 1.05rem;
             }
 
             /* Tables to cards */
@@ -686,10 +697,12 @@
 
             .table-mobile-cards tbody tr {
                 display: block;
-                padding: 1rem;
-                margin-bottom: 0.75rem;
+                padding: 1.25rem 1rem;
+                margin-bottom: 0.5rem;
                 border: 1px solid var(--border-color);
-                border-radius: 12px;
+                border-left: none;
+                border-right: none;
+                border-radius: 0;
                 background: var(--bg-card);
             }
 
@@ -697,14 +710,14 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 0.5rem 0;
+                padding: 0.625rem 0;
                 border-bottom: none;
-                font-size: 0.95rem;
+                font-size: 1rem;
             }
 
             .table-mobile-cards tbody td::before {
                 content: attr(data-label);
-                font-size: 0.75rem;
+                font-size: 0.8rem;
                 color: var(--text-muted);
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
@@ -715,22 +728,25 @@
 
             .table-mobile-cards tbody td:last-child {
                 justify-content: flex-end;
-                padding-top: 0.75rem;
-                margin-top: 0.5rem;
+                padding-top: 0.875rem;
+                margin-top: 0.625rem;
                 border-top: 1px solid var(--border-color);
             }
 
             /* Flash messages */
             .flash-messages {
-                left: 10px;
-                right: 10px;
+                left: 0;
+                right: 0;
                 top: 60px;
                 max-width: none;
             }
 
             .alert {
-                font-size: 0.95rem;
-                padding: 0.875rem 1rem;
+                font-size: 1rem;
+                padding: 1rem 1.25rem;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
             }
 
             /* Charts */
@@ -748,11 +764,18 @@
             }
 
             /* Grid spacing */
-            .row.g-3 {
-                gap: 0.75rem !important;
+            .row {
+                margin-left: 0;
+                margin-right: 0;
             }
 
-            .col-12 {
+            .row.g-3 {
+                gap: 0.5rem !important;
+            }
+
+            .col-12, .col-6, .col-md-6, .col-lg-4 {
+                padding-left: 0;
+                padding-right: 0;
                 margin-bottom: 0;
             }
 
@@ -763,31 +786,41 @@
 
             /* Bottom nav improvements */
             .bottom-nav {
-                padding: 0.5rem 0;
+                padding: 0.75rem 0;
+                height: 80px;
             }
 
             .bottom-nav a {
-                padding: 0.625rem 0.25rem;
-                font-size: 0.7rem;
+                padding: 0.75rem 0.25rem;
+                font-size: 0.8rem;
+                font-weight: 600;
             }
 
             .bottom-nav i {
-                font-size: 1.35rem;
-                margin-bottom: 3px;
+                font-size: 1.75rem;
+                margin-bottom: 5px;
             }
 
             /* Mobile more menu */
             .mobile-more-panel {
-                padding: 1.25rem;
+                padding: 1.5rem 1rem;
+                bottom: 80px;
             }
 
             .mobile-more-links a {
-                padding: 1rem 0.75rem;
-                font-size: 1.05rem;
+                padding: 1.125rem 1rem;
+                font-size: 1.1rem;
+                font-weight: 500;
             }
 
             .mobile-more-links a i {
-                font-size: 1.35rem;
+                font-size: 1.5rem;
+            }
+
+            .mobile-more-header {
+                font-size: 1.2rem;
+                padding-bottom: 1rem;
+                margin-bottom: 1rem;
             }
 
             /* Dropdowns */
@@ -828,42 +861,41 @@
 
         /* Extra small phones */
         @media (max-width: 375px) {
-            .container {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
+            main.container {
+                padding: 0.875rem;
             }
 
             .stat-box {
-                padding: 0.875rem;
+                padding: 1rem;
             }
 
             .stat-box h3 {
-                font-size: 1.25rem;
+                font-size: 1.45rem;
             }
 
             .stat-label {
-                font-size: 0.75rem;
+                font-size: 0.8rem;
             }
 
             .page-header-flex h1 {
-                font-size: 1.35rem;
+                font-size: 1.5rem;
             }
 
             .btn {
-                font-size: 0.9rem;
+                font-size: 0.95rem;
             }
 
             .game-card-body {
-                padding: 0.875rem;
+                padding: 1rem;
             }
 
             .table-mobile-cards tbody tr {
-                padding: 0.875rem;
+                padding: 1rem;
             }
 
             .mobile-more-links a {
-                padding: 0.875rem 0.5rem;
-                font-size: 1rem;
+                padding: 1rem;
+                font-size: 1.05rem;
             }
         }
     </style>
