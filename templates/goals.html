@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Goals - LifeQuest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header-flex">
+    <h1 class="h4 mb-0 fw-bold">
+        <i class="bi bi-trophy me-2" style="color: var(--gold);"></i>Goals
+    </h1>
+    <a href="{{ url_for('goal_add') }}" class="btn btn-game"><i class="bi bi-plus-lg me-1"></i> New Goal</a>
+</div>
+
+<!-- Active Goals -->
+<h5 class="mb-3"><i class="bi bi-flag me-2"></i>Active Goals</h5>
+{% if goal_data %}
+<div class="row g-3 mb-4">
+    {% for item in goal_data %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="game-card h-100">
+            <div class="game-card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <strong>{{ item.goal.title }}</strong>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-game" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('goal_edit', id=item.goal.id) }}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+                            <li>
+                                <form action="{{ url_for('goal_complete', id=item.goal.id) }}" method="POST">
+                                    <button type="submit" class="dropdown-item"><i class="bi bi-check-circle me-2"></i>Mark Complete</button>
+                                </form>
+                            </li>
+                            <li><hr class="dropdown-divider" style="border-color: var(--border-color);"></li>
+                            <li>
+                                <form action="{{ url_for('goal_delete', id=item.goal.id) }}" method="POST" onsubmit="return confirm('Delete this goal?')">
+                                    <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Delete</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                {% if item.goal.description %}
+                <p class="text-muted small mb-2">{{ item.goal.description[:80] }}{% if item.goal.description|length > 80 %}...{% endif %}</p>
+                {% endif %}
+
+                <!-- Progress -->
+                {% if item.goal.target_value %}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">Progress</small>
+                        <small class="{% if item.percentage >= 100 %}amount-income{% else %}text-muted{% endif %}">
+                            {{ item.goal.current_value }}{% if item.goal.unit %} {{ item.goal.unit }}{% endif %} / {{ item.goal.target_value }}{% if item.goal.unit %} {{ item.goal.unit }}{% endif %}
+                        </small>
+                    </div>
+                    <div style="height: 8px; background: var(--bg-hover); border-radius: 4px; overflow: hidden;">
+                        <div style="height: 100%; width: {{ item.percentage }}%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple)); box-shadow: 0 0 8px rgba(0,212,255,0.3); transition: width 0.5s;"></div>
+                    </div>
+                    <small class="text-muted">{{ '%.0f'|format(item.percentage) }}%</small>
+                </div>
+
+                <!-- Update Progress Form -->
+                <form action="{{ url_for('goal_update_progress', id=item.goal.id) }}" method="POST" class="mb-2">
+                    <div class="input-group input-group-sm">
+                        <input type="number" step="0.01" name="current_value" class="form-control" value="{{ item.goal.current_value }}" placeholder="Update">
+                        <button type="submit" class="btn btn-outline-game"><i class="bi bi-arrow-up-circle"></i></button>
+                    </div>
+                </form>
+                {% endif %}
+
+                <!-- Deadline -->
+                {% if item.goal.deadline %}
+                <div class="d-flex justify-content-between" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem;">
+                    <small class="text-muted"><i class="bi bi-calendar me-1"></i>{{ item.goal.deadline.strftime('%b %d, %Y') }}</small>
+                    {% if item.days_left is not none %}
+                    <small class="{% if item.days_left < 0 %}amount-expense{% elif item.days_left < 7 %}text-warning{% else %}text-muted{% endif %}">
+                        {% if item.days_left < 0 %}
+                            {{ item.days_left|abs }} days overdue
+                        {% else %}
+                            {{ item.days_left }} day{{ 's' if item.days_left != 1 else '' }} left
+                        {% endif %}
+                    </small>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="game-card mb-4">
+    <div class="empty-state">
+        <i class="bi bi-trophy"></i>
+        <p class="text-muted mt-3">No active goals</p>
+        <p class="text-muted small">Set goals and track your progress!</p>
+        <a href="{{ url_for('goal_add') }}" class="btn btn-game mt-2"><i class="bi bi-plus-lg me-1"></i> Create Your First Goal</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Completed Goals -->
+{% if completed_goals %}
+<h5 class="mb-3"><i class="bi bi-check-circle me-2"></i>Recently Completed</h5>
+<div class="row g-3">
+    {% for goal in completed_goals %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="game-card opacity-75">
+            <div class="game-card-body">
+                <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill" style="color: var(--neon-green); font-size: 1.25rem;"></i>
+                    <div>
+                        <strong>{{ goal.title }}</strong>
+                        <br><small class="text-muted">Completed {{ goal.completed_at.strftime('%b %d, %Y') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

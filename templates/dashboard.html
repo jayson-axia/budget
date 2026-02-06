@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - BudgetQuest{% endblock %}
+{% block title %}Dashboard - LifeQuest{% endblock %}
 
 {% block content %}
 <!-- Player Stats Bar -->
@@ -82,6 +82,50 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Income vs Expenses Chart -->
+<div class="game-card mb-4">
+    <div class="game-card-header">
+        <span><i class="bi bi-bar-chart me-2" style="color: var(--neon-blue);"></i>6-Month Overview</span>
+    </div>
+    <div class="game-card-body">
+        <div style="position: relative; height: 300px; max-height: 40vh;">
+            <canvas id="monthlyChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Warnings -->
+{% if budget_warnings %}
+<div class="game-card mb-4">
+    <div class="game-card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-speedometer2 me-2" style="color: var(--neon-yellow);"></i>Budget Alerts</span>
+        <a href="{{ url_for('budget_list') }}" class="btn btn-sm btn-outline-game">View All</a>
+    </div>
+    <div class="game-card-body">
+        {% for item in budget_warnings %}
+        <div class="{% if not loop.last %}mb-3{% endif %}">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="category-pill" style="background: {{ item.category.color }}20; color: {{ item.category.color }};">
+                    <i class="bi bi-{{ item.category.icon }}"></i> {{ item.category.name }}
+                </span>
+                <small class="{% if item.status == 'danger' %}amount-expense{% else %}text-muted{% endif %}">
+                    {{ currency_symbol }}{{ "%.2f"|format(item.spent) }} / {{ currency_symbol }}{{ "%.2f"|format(item.limit) }}
+                    ({{ "%.0f"|format(item.raw_percentage) }}%)
+                </small>
+            </div>
+            <div style="height: 8px; background: var(--bg-hover); border-radius: 4px; overflow: hidden;">
+                <div style="height: 100%; width: {{ item.percentage }}%; border-radius: 4px; transition: width 0.5s;
+                    {% if item.status == 'danger' %}background: linear-gradient(90deg, var(--neon-red), #cc3344); box-shadow: 0 0 8px rgba(255,71,87,0.3);
+                    {% elif item.status == 'warning' %}background: linear-gradient(90deg, var(--neon-yellow), #ff8c00); box-shadow: 0 0 8px rgba(255,217,61,0.3);
+                    {% else %}background: linear-gradient(90deg, var(--neon-green), var(--neon-blue)); box-shadow: 0 0 8px rgba(0,255,136,0.3);{% endif %}">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <!-- Quick Actions -->
 <div class="row g-3 mb-4">
@@ -167,4 +211,63 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadChart() {
+    const res = await fetch('/api/chart/monthly-summary');
+    const data = await res.json();
+    const ctx = document.getElementById('monthlyChart').getContext('2d');
+    const isDark = !document.body.classList.contains('light-mode');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.months.map(m => m.month),
+            datasets: [
+                {
+                    label: 'Income',
+                    data: data.months.map(m => m.income),
+                    backgroundColor: isDark ? 'rgba(0, 255, 136, 0.6)' : 'rgba(5, 150, 105, 0.6)',
+                    borderColor: isDark ? '#00ff88' : '#059669',
+                    borderWidth: 2,
+                    borderRadius: 6
+                },
+                {
+                    label: 'Expenses',
+                    data: data.months.map(m => m.expenses),
+                    backgroundColor: isDark ? 'rgba(255, 71, 87, 0.6)' : 'rgba(220, 38, 38, 0.6)',
+                    borderColor: isDark ? '#ff4757' : '#dc2626',
+                    borderWidth: 2,
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: isDark ? '#9ca3af' : '#4b5563',
+                        font: { size: 12 }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                    grid: { color: isDark ? 'rgba(42,42,62,0.5)' : 'rgba(0,0,0,0.05)' }
+                },
+                y: {
+                    ticks: { color: isDark ? '#9ca3af' : '#4b5563' },
+                    grid: { color: isDark ? 'rgba(42,42,62,0.5)' : 'rgba(0,0,0,0.05)' }
+                }
+            }
+        }
+    });
+}
+loadChart();
+</script>
 {% endblock %}

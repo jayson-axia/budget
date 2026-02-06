@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Recurring - LifeQuest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header-flex">
+    <h1 class="h4 mb-0 fw-bold">
+        <i class="bi bi-arrow-repeat me-2" style="color: var(--neon-blue);"></i>Recurring Transactions
+    </h1>
+    <a href="{{ url_for('recurring_add') }}" class="btn btn-game"><i class="bi bi-plus-lg me-1"></i> Add Recurring</a>
+</div>
+
+{% if recurring %}
+<div class="row g-3">
+    {% for rec in recurring %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="game-card h-100 {% if not rec.is_active %}opacity-50{% endif %}">
+            <div class="game-card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge" style="background: {% if rec.type == 'income' %}var(--neon-green){% else %}var(--neon-red){% endif %}; color: #000; font-size: 0.7rem;">
+                                {{ rec.type|upper }}
+                            </span>
+                            {% if not rec.is_active %}
+                            <span class="badge" style="background: var(--text-muted); color: #000; font-size: 0.7rem;">PAUSED</span>
+                            {% endif %}
+                        </div>
+                        <strong>{{ rec.description }}</strong>
+                        {% if rec.resolved_category %}
+                        <br>
+                        <span class="category-pill mt-1" style="background: {{ rec.resolved_category.color }}20; color: {{ rec.resolved_category.color }};">
+                            <i class="bi bi-{{ rec.resolved_category.icon }}"></i> {{ rec.resolved_category.name }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <span class="amount {% if rec.type == 'income' %}amount-income{% else %}amount-expense{% endif %}" style="font-size: 1.1rem;">
+                        {% if rec.type == 'income' %}+{% else %}-{% endif %}{{ currency_symbol }}{{ "%.2f"|format(rec.amount) }}
+                    </span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-muted">
+                        <i class="bi bi-clock me-1"></i>{{ rec.frequency|capitalize }}
+                    </small>
+                    <small class="text-muted">
+                        <i class="bi bi-calendar-event me-1"></i>Next: {{ rec.next_date.strftime('%b %d, %Y') }}
+                    </small>
+                </div>
+
+                {% if rec.notes %}
+                <small class="text-muted d-block mb-2">{{ rec.notes[:60] }}{% if rec.notes|length > 60 %}...{% endif %}</small>
+                {% endif %}
+
+                <div class="d-flex gap-1 justify-content-end" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                    <a href="{{ url_for('recurring_edit', id=rec.id) }}" class="btn btn-sm btn-outline-game"><i class="bi bi-pencil"></i></a>
+                    <form action="{{ url_for('recurring_toggle', id=rec.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-game" title="{{ 'Pause' if rec.is_active else 'Resume' }}">
+                            <i class="bi bi-{{ 'pause' if rec.is_active else 'play' }}"></i>
+                        </button>
+                    </form>
+                    <form action="{{ url_for('recurring_delete', id=rec.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this recurring transaction?')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="game-card">
+    <div class="empty-state">
+        <i class="bi bi-arrow-repeat"></i>
+        <p class="text-muted mt-3">No recurring transactions</p>
+        <p class="text-muted small">Set up automatic income or expenses that repeat on a schedule.</p>
+        <a href="{{ url_for('recurring_add') }}" class="btn btn-game mt-2"><i class="bi bi-plus-lg me-1"></i> Add Your First Recurring</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

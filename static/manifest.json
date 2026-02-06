@@ -1,7 +1,7 @@
 {
-  "name": "BudgetQuest",
-  "short_name": "BudgetQuest",
-  "description": "Level up your finances",
+  "name": "LifeQuest",
+  "short_name": "LifeQuest",
+  "description": "Level up your daily life - tasks, habits, goals, and finances",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#0a0a0f",

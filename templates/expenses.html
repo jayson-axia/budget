@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Expenses - BudgetQuest{% endblock %}
+{% block title %}Expenses - LifeQuest{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 page-header-flex">
     <h1 class="h4 mb-0 fw-bold"><i class="bi bi-arrow-down-circle me-2" style="color: var(--neon-red);"></i>Expenses</h1>
     <div class="d-flex gap-2">
         <a href="{{ url_for('expense_categories') }}" class="btn btn-outline-game"><i class="bi bi-tag me-1"></i> Categories</a>
@@ -28,48 +28,63 @@
 <div class="game-card">
     <div class="game-card-body p-0">
         {% if expenses %}
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>Description</th>
-                        <th>Category</th>
-                        <th>Date</th>
-                        <th class="text-end">Amount</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for expense in expenses %}
-                    <tr>
-                        <td>
-                            <strong>{{ expense.description }}</strong>
-                            {% if expense.notes %}<br><small class="text-muted">{{ expense.notes[:50] }}{% if expense.notes|length > 50 %}...{% endif %}</small>{% endif %}
-                        </td>
-                        <td>
-                            {% if expense.category %}
-                            <span class="category-pill" style="background: {{ expense.category.color }}20; color: {{ expense.category.color }};">
-                                <i class="bi bi-{{ expense.category.icon }}"></i> {{ expense.category.name }}
-                            </span>
-                            {% else %}
-                            <span class="text-muted">-</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ expense.date.strftime('%b %d, %Y') }}</td>
-                        <td class="text-end">
-                            <span class="amount amount-expense">-{{ currency_symbol }}{{ "%.2f"|format(expense.amount) }}</span>
-                        </td>
-                        <td class="text-end">
-                            <a href="{{ url_for('expense_edit', id=expense.id) }}" class="btn btn-sm btn-outline-game me-1"><i class="bi bi-pencil"></i></a>
-                            <form action="{{ url_for('expense_delete', id=expense.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this expense?')">
-                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <form id="bulkDeleteForm" method="POST" action="{{ url_for('expense_bulk_delete') }}" onsubmit="return confirm('Delete selected expense records?');">
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content-space-between; align-items: center;">
+                <label class="d-flex align-items-center gap-2" style="cursor: pointer; margin: 0;">
+                    <input type="checkbox" id="selectAll" style="cursor: pointer;">
+                    <span class="text-muted">Select All</span>
+                </label>
+                <button type="submit" class="btn btn-sm btn-outline-danger" id="bulkDeleteBtn" style="display: none;">
+                    <i class="bi bi-trash me-1"></i>Delete Selected
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 table-mobile-cards">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td data-label="">
+                                <input type="checkbox" class="item-checkbox" name="selected_ids" value="{{ expense.id }}" style="cursor: pointer;">
+                            </td>
+                            <td data-label="Description">
+                                <strong>{{ expense.description }}</strong>
+                                {% if expense.notes %}<br><small class="text-muted">{{ expense.notes[:50] }}{% if expense.notes|length > 50 %}...{% endif %}</small>{% endif %}
+                            </td>
+                            <td data-label="Category">
+                                {% if expense.category %}
+                                <span class="category-pill" style="background: {{ expense.category.color }}20; color: {{ expense.category.color }};">
+                                    <i class="bi bi-{{ expense.category.icon }}"></i> {{ expense.category.name }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Date">{{ expense.date.strftime('%b %d, %Y') }}</td>
+                            <td data-label="Amount">
+                                <span class="amount amount-expense">-{{ currency_symbol }}{{ "%.2f"|format(expense.amount) }}</span>
+                            </td>
+                            <td data-label="">
+                                <a href="{{ url_for('expense_edit', id=expense.id) }}" class="btn btn-sm btn-outline-game me-1"><i class="bi bi-pencil"></i></a>
+                                <form action="{{ url_for('expense_delete', id=expense.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this expense?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
         {% else %}
         <div class="empty-state">
             <i class="bi bi-credit-card"></i>
@@ -80,4 +95,28 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const selectAll = document.getElementById('selectAll');
+const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+selectAll?.addEventListener('change', function() {
+    itemCheckboxes.forEach(cb => cb.checked = this.checked);
+    updateBulkDeleteBtn();
+});
+
+itemCheckboxes.forEach(cb => {
+    cb.addEventListener('change', updateBulkDeleteBtn);
+});
+
+function updateBulkDeleteBtn() {
+    const checked = document.querySelectorAll('.item-checkbox:checked').length;
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.style.display = checked > 0 ? 'block' : 'none';
+    }
+}
+</script>
 {% endblock %}

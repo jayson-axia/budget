@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if note else 'New' }} Note - LifeQuest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header-flex">
+    <h1 class="h4 mb-0 fw-bold">
+        <i class="bi bi-journal-text me-2" style="color: var(--neon-yellow);"></i>{{ 'Edit' if note else 'New' }} Note
+    </h1>
+    <a href="{{ url_for('note_list') }}" class="btn btn-outline-game"><i class="bi bi-arrow-left me-1"></i> Back</a>
+</div>
+
+<div class="game-card" style="max-width: 800px;">
+    <div class="game-card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input type="text" name="title" class="form-control" required
+                    value="{{ note.title if note else '' }}" placeholder="Note title">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Category (optional)</label>
+                <input type="text" name="category" class="form-control"
+                    value="{{ note.category if note and note.category else '' }}" placeholder="e.g., Personal, Work, Ideas">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Content</label>
+                <textarea name="content" class="form-control" rows="12" placeholder="Write your thoughts here...">{{ note.content if note and note.content else '' }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-game w-100">
+                <i class="bi bi-check-lg me-1"></i> {{ 'Update' if note else 'Save' }} Note
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

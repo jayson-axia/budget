@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#00d4ff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="BudgetQuest">
-    <title>{% block title %}BudgetQuest{% endblock %}</title>
+    <meta name="apple-mobile-web-app-title" content="LifeQuest">
+    <title>{% block title %}LifeQuest{% endblock %}</title>
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192.svg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -26,7 +26,7 @@
             --neon-yellow: #ffd93d;
             --neon-pink: #ff6b9d;
             --text-primary: #ffffff;
-            --text-muted: #6b7280;
+            --text-muted: #9ca3af;
             --border-color: #2a2a3e;
             --gold: #ffd700;
         }
@@ -36,7 +36,7 @@
             --bg-card: #ffffff;
             --bg-hover: #f0f0f2;
             --text-primary: #1a1a2e;
-            --text-muted: #6b7280;
+            --text-muted: #4b5563;
             --border-color: #e5e5e7;
         }
 
@@ -50,6 +50,47 @@
 
         body.light-mode .btn-close-white {
             filter: none;
+        }
+
+        body.light-mode .amount-income,
+        body.light-mode .stat-box.income h3 {
+            color: #059669;
+            text-shadow: none;
+        }
+
+        body.light-mode .stat-box.expense h3,
+        body.light-mode .amount-expense {
+            color: #dc2626;
+            text-shadow: none;
+        }
+
+        body.light-mode .stat-box.balance h3,
+        body.light-mode .amount-balance {
+            color: #0284c7;
+            text-shadow: none;
+        }
+
+        body.light-mode .stat-box.bank h3 {
+            color: #7c3aed;
+            text-shadow: none;
+        }
+
+        body.light-mode .input-group-text {
+            color: #059669;
+        }
+
+        body.light-mode .alert-success {
+            color: #059669;
+            border-color: #059669;
+        }
+
+        body.light-mode .alert-danger {
+            color: #dc2626;
+            border-color: #dc2626;
+        }
+
+        body.light-mode .bottom-nav {
+            background: rgba(255, 255, 255, 0.98);
         }
 
         * { box-sizing: border-box; }
@@ -170,7 +211,8 @@
 
         .stat-label {
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 0.5rem;
@@ -247,7 +289,7 @@
         .btn-outline-game {
             background: transparent;
             border: 1px solid var(--border-color);
-            color: var(--text-muted);
+            color: var(--text-primary);
         }
 
         .btn-outline-game:hover {
@@ -374,7 +416,7 @@
             padding: 0.75rem 0.25rem;
             color: var(--text-muted);
             text-decoration: none;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             transition: all 0.3s;
         }
 
@@ -407,7 +449,7 @@
         .empty-state i {
             font-size: 3rem;
             color: var(--text-muted);
-            opacity: 0.3;
+            opacity: 0.5;
         }
 
         /* Flash Messages */
@@ -451,6 +493,182 @@
         .list-group-item:hover {
             background: var(--bg-hover);
         }
+
+        /* Override Bootstrap text-muted to match theme */
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        /* Mobile More Menu */
+        .mobile-more-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1001;
+        }
+
+        .mobile-more-menu.show {
+            display: block;
+        }
+
+        .mobile-more-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .mobile-more-panel {
+            position: absolute;
+            bottom: 70px;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            border-radius: 16px 16px 0 0;
+            padding: 1rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .mobile-more-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.75rem;
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .mobile-more-links a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 0.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .mobile-more-links a:hover,
+        .mobile-more-links a:active {
+            background: var(--bg-hover);
+        }
+
+        .mobile-more-links a i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+            color: var(--neon-blue);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 767px) {
+            .stat-box h3 {
+                font-size: 1.25rem;
+            }
+
+            .page-header-flex {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 0.75rem;
+            }
+
+            .page-header-flex .d-flex {
+                width: 100%;
+            }
+
+            .page-header-flex .btn {
+                flex: 1;
+            }
+
+            .btn {
+                min-height: 44px;
+            }
+
+            .btn-sm {
+                min-height: 40px;
+                min-width: 40px;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .form-control, .form-select {
+                min-height: 48px;
+                font-size: 16px;
+            }
+
+            .table-mobile-cards thead {
+                display: none;
+            }
+
+            .table-mobile-cards tbody tr {
+                display: block;
+                padding: 1rem;
+                margin-bottom: 0.5rem;
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                background: var(--bg-card);
+            }
+
+            .table-mobile-cards tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.375rem 0;
+                border-bottom: none;
+            }
+
+            .table-mobile-cards tbody td::before {
+                content: attr(data-label);
+                font-size: 0.75rem;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-weight: 600;
+                margin-right: 1rem;
+            }
+
+            .table-mobile-cards tbody td:last-child {
+                justify-content: flex-end;
+                padding-top: 0.5rem;
+                margin-top: 0.25rem;
+                border-top: 1px solid var(--border-color);
+            }
+
+            .flash-messages {
+                left: 10px;
+                right: 10px;
+                max-width: none;
+            }
+
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .stat-box h3 {
+                font-size: 1.1rem;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+
+            .stat-box {
+                padding: 1rem;
+            }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -459,18 +677,25 @@
     <nav class="navbar sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('dashboard') }}">
-                <i class="bi bi-controller me-2"></i>BudgetQuest
+                <i class="bi bi-controller me-2"></i>LifeQuest
             </a>
             <div class="desktop-nav d-flex align-items-center gap-1">
                 <a class="nav-link {{ 'active' if request.endpoint == 'dashboard' }}" href="{{ url_for('dashboard') }}"><i class="bi bi-house"></i> Home</a>
-                <a class="nav-link {{ 'active' if 'income' in request.endpoint }}" href="{{ url_for('income_list') }}"><i class="bi bi-plus-circle"></i> Income</a>
-                <a class="nav-link {{ 'active' if 'expense' in request.endpoint }}" href="{{ url_for('expense_list') }}"><i class="bi bi-dash-circle"></i> Expenses</a>
-                <a class="nav-link {{ 'active' if 'balance' in request.endpoint }}" href="{{ url_for('balance_list') }}"><i class="bi bi-bank"></i> Banks</a>
-                <a class="nav-link {{ 'active' if 'calendar' in request.endpoint }}" href="{{ url_for('calendar_view') }}"><i class="bi bi-calendar3"></i> Calendar</a>
-                <a class="nav-link {{ 'active' if 'client' in request.endpoint }}" href="{{ url_for('client_list') }}"><i class="bi bi-people"></i> Clients</a>
+                <a class="nav-link {{ 'active' if 'task' in request.endpoint }}" href="{{ url_for('task_list') }}"><i class="bi bi-check2-square"></i> Tasks</a>
+                <a class="nav-link {{ 'active' if 'note' in request.endpoint }}" href="{{ url_for('note_list') }}"><i class="bi bi-journal-text"></i> Notes</a>
+                <a class="nav-link {{ 'active' if 'habit' in request.endpoint }}" href="{{ url_for('habit_list') }}"><i class="bi bi-bar-chart-steps"></i> Habits</a>
+                <a class="nav-link {{ 'active' if 'goal' in request.endpoint }}" href="{{ url_for('goal_list') }}"><i class="bi bi-trophy"></i> Goals</a>
                 <div class="dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
                     <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ url_for('income_list') }}"><i class="bi bi-plus-circle me-2"></i>Income</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('expense_list') }}"><i class="bi bi-dash-circle me-2"></i>Expenses</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('balance_list') }}"><i class="bi bi-bank me-2"></i>Banks</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('calendar_view') }}"><i class="bi bi-calendar3 me-2"></i>Calendar</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('client_list') }}"><i class="bi bi-people me-2"></i>Clients</a></li>
+                        <li><hr class="dropdown-divider" style="border-color: var(--border-color);"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('budget_list') }}"><i class="bi bi-speedometer2 me-2"></i>Budgets</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('recurring_list') }}"><i class="bi bi-arrow-repeat me-2"></i>Recurring</a></li>
                         <li><a class="dropdown-item" href="{{ url_for('credential_list') }}"><i class="bi bi-key me-2"></i>Keys</a></li>
                         <li><a class="dropdown-item" href="{{ url_for('link_list') }}"><i class="bi bi-link-45deg me-2"></i>Links</a></li>
                         <li><a class="dropdown-item" href="{{ url_for('activity_log') }}"><i class="bi bi-clock-history me-2"></i>Activity</a></li>
@@ -486,11 +711,42 @@
 
     <nav class="bottom-nav">
         <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}"><i class="bi bi-house"></i>Home</a>
-        <a href="{{ url_for('income_list') }}" class="{{ 'active' if 'income' in request.endpoint }}"><i class="bi bi-plus-circle"></i>Income</a>
-        <a href="{{ url_for('expense_list') }}" class="{{ 'active' if 'expense' in request.endpoint }}"><i class="bi bi-dash-circle"></i>Expenses</a>
-        <a href="{{ url_for('balance_list') }}" class="{{ 'active' if 'balance' in request.endpoint }}"><i class="bi bi-bank"></i>Banks</a>
-        <a href="{{ url_for('calendar_view') }}" class="{{ 'active' if 'calendar' in request.endpoint }}"><i class="bi bi-calendar3"></i>Cal</a>
+        <a href="{{ url_for('task_list') }}" class="{{ 'active' if 'task' in request.endpoint }}"><i class="bi bi-check2-square"></i>Tasks</a>
+        <a href="{{ url_for('note_list') }}" class="{{ 'active' if 'note' in request.endpoint }}"><i class="bi bi-journal-text"></i>Notes</a>
+        <a href="{{ url_for('habit_list') }}" class="{{ 'active' if 'habit' in request.endpoint }}"><i class="bi bi-bar-chart-steps"></i>Habits</a>
+        <a href="#" onclick="document.getElementById('mobileMoreMenu').classList.toggle('show'); return false;"
+           class="{{ 'active' if request.endpoint in ['goal_list','calendar_view','client_list','credential_list','link_list','activity_log','api_settings','settings','budget_list','recurring_list','income_list','expense_list','balance_list'] }}">
+            <i class="bi bi-three-dots"></i>More
+        </a>
     </nav>
+
+    <div id="mobileMoreMenu" class="mobile-more-menu">
+        <div class="mobile-more-overlay" onclick="document.getElementById('mobileMoreMenu').classList.remove('show')"></div>
+        <div class="mobile-more-panel">
+            <div class="mobile-more-header">
+                <span>More</span>
+                <button onclick="document.getElementById('mobileMoreMenu').classList.remove('show')" class="btn btn-sm btn-outline-game">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="mobile-more-links">
+                <a href="{{ url_for('goal_list') }}"><i class="bi bi-trophy"></i> Goals</a>
+                <a href="{{ url_for('income_list') }}"><i class="bi bi-plus-circle"></i> Income</a>
+                <a href="{{ url_for('expense_list') }}"><i class="bi bi-dash-circle"></i> Expenses</a>
+                <a href="{{ url_for('balance_list') }}"><i class="bi bi-bank"></i> Banks</a>
+                <a href="{{ url_for('calendar_view') }}"><i class="bi bi-calendar3"></i> Calendar</a>
+                <a href="{{ url_for('client_list') }}"><i class="bi bi-people"></i> Clients</a>
+                <a href="{{ url_for('budget_list') }}"><i class="bi bi-speedometer2"></i> Budgets</a>
+                <a href="{{ url_for('recurring_list') }}"><i class="bi bi-arrow-repeat"></i> Recurring</a>
+                <a href="{{ url_for('credential_list') }}"><i class="bi bi-key"></i> Keys</a>
+                <a href="{{ url_for('link_list') }}"><i class="bi bi-link-45deg"></i> Links</a>
+                <a href="{{ url_for('activity_log') }}"><i class="bi bi-clock-history"></i> Activity</a>
+                <a href="{{ url_for('api_settings') }}"><i class="bi bi-code-slash"></i> API</a>
+                <a href="{{ url_for('settings') }}"><i class="bi bi-gear"></i> Settings</a>
+                <a href="{{ url_for('logout') }}" style="color: var(--neon-red);"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            </div>
+        </div>
+    </div>
     {% endif %}
 
     <div class="flash-messages">
@@ -511,6 +767,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/static/sw.js')

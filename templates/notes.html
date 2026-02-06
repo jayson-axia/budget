@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Notes - LifeQuest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header-flex">
+    <h1 class="h4 mb-0 fw-bold">
+        <i class="bi bi-journal-text me-2" style="color: var(--neon-yellow);"></i>Notes
+    </h1>
+    <a href="{{ url_for('note_add') }}" class="btn btn-game"><i class="bi bi-plus-lg me-1"></i> New Note</a>
+</div>
+
+{% if notes %}
+<div class="row g-3">
+    {% for note in notes %}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="game-card h-100">
+            <div class="game-card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            {% if note.is_pinned %}
+                            <i class="bi bi-pin-fill" style="color: var(--neon-yellow);"></i>
+                            {% endif %}
+                            <strong>{{ note.title }}</strong>
+                        </div>
+                        {% if note.category %}
+                        <span class="badge" style="background: var(--neon-blue); color: #000; font-size: 0.7rem;">{{ note.category }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if note.content %}
+                <p class="text-muted mb-2" style="font-size: 0.9rem; line-height: 1.4;">
+                    {{ note.content[:150] }}{% if note.content|length > 150 %}...{% endif %}
+                </p>
+                {% endif %}
+                <div class="d-flex justify-content-between align-items-center" style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.75rem;">
+                    <small class="text-muted">{{ note.updated_at.strftime('%b %d, %Y') }}</small>
+                    <div class="d-flex gap-1">
+                        <form action="{{ url_for('note_pin', id=note.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-game" title="{{ 'Unpin' if note.is_pinned else 'Pin' }}">
+                                <i class="bi bi-pin{{ '-fill' if note.is_pinned else '' }}"></i>
+                            </button>
+                        </form>
+                        <a href="{{ url_for('note_edit', id=note.id) }}" class="btn btn-sm btn-outline-game"><i class="bi bi-pencil"></i></a>
+                        <form action="{{ url_for('note_delete', id=note.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this note?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="game-card">
+    <div class="empty-state">
+        <i class="bi bi-journal-text"></i>
+        <p class="text-muted mt-3">No notes yet</p>
+        <p class="text-muted small">Start capturing your thoughts and ideas!</p>
+        <a href="{{ url_for('note_add') }}" class="btn btn-game mt-2"><i class="bi bi-plus-lg me-1"></i> Create Your First Note</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

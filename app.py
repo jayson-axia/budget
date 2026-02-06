@@ -1,6 +1,6 @@
 import os
 import secrets
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from calendar import monthrange
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
@@ -170,6 +170,12 @@ class User(UserMixin, db.Model):
     bank_accounts = db.relationship('BankAccount', backref='user', lazy=True, cascade='all, delete-orphan')
     activity_logs = db.relationship('ActivityLog', backref='user', lazy=True, cascade='all, delete-orphan')
     api_keys = db.relationship('ApiKey', backref='user', lazy=True, cascade='all, delete-orphan')
+    budgets = db.relationship('Budget', backref='user', lazy=True, cascade='all, delete-orphan')
+    recurring_transactions = db.relationship('RecurringTransaction', backref='user', lazy=True, cascade='all, delete-orphan')
+    tasks = db.relationship('Task', backref='user', lazy=True, cascade='all, delete-orphan')
+    notes = db.relationship('Note', backref='user', lazy=True, cascade='all, delete-orphan')
+    habits = db.relationship('Habit', backref='user', lazy=True, cascade='all, delete-orphan')
+    goals = db.relationship('Goal', backref='user', lazy=True, cascade='all, delete-orphan')
 
 
 class IncomeCategory(db.Model):
@@ -290,6 +296,91 @@ class Link(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class Budget(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    expense_category_id = db.Column(db.Integer, db.ForeignKey('expense_category.id'), nullable=False)
+    monthly_limit = db.Column(db.Float, nullable=False)
+    month = db.Column(db.Integer, nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    category = db.relationship('ExpenseCategory', backref='budgets')
+
+
+class RecurringTransaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(10), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    description = db.Column(db.String(200), nullable=False)
+    category_id = db.Column(db.Integer, nullable=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
+    frequency = db.Column(db.String(20), nullable=False)
+    next_date = db.Column(db.Date, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    is_completed = db.Column(db.Boolean, default=False)
+    priority = db.Column(db.String(10), default='medium')
+    due_date = db.Column(db.Date, nullable=True)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text)
+    category = db.Column(db.String(50))
+    is_pinned = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Habit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    icon = db.Column(db.String(50), default='check-circle')
+    color = db.Column(db.String(7), default='#6366f1')
+    frequency = db.Column(db.String(20), default='daily')
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    logs = db.relationship('HabitLog', backref='habit', lazy=True, cascade='all, delete-orphan')
+
+
+class HabitLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    habit_id = db.Column(db.Integer, db.ForeignKey('habit.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Goal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    target_value = db.Column(db.Float, nullable=True)
+    current_value = db.Column(db.Float, default=0)
+    unit = db.Column(db.String(50))
+    deadline = db.Column(db.Date, nullable=True)
+    is_completed = db.Column(db.Boolean, default=False)
+    category = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -364,6 +455,66 @@ def get_user_stats(user_id):
         'total_expenses': total_expenses,
         'balance': total_income - total_expenses
     }
+
+
+def _add_months(d, months):
+    """Add months to a date, handling month-end edge cases."""
+    month = d.month - 1 + months
+    year = d.year + month // 12
+    month = month % 12 + 1
+    day = min(d.day, monthrange(year, month)[1])
+    return date(year, month, day)
+
+
+def process_recurring_transactions(user_id):
+    """Create transactions for any recurring items that are due."""
+    today = date.today()
+    recurrings = RecurringTransaction.query.filter(
+        RecurringTransaction.user_id == user_id,
+        RecurringTransaction.is_active == True,
+        RecurringTransaction.next_date <= today
+    ).all()
+
+    created_count = 0
+    for rec in recurrings:
+        while rec.next_date <= today:
+            if rec.type == 'income':
+                txn = Income(
+                    user_id=user_id,
+                    source=rec.description,
+                    amount=rec.amount,
+                    date=rec.next_date,
+                    notes=f'Auto-created from recurring: {rec.description}',
+                    category_id=rec.category_id,
+                    client_id=rec.client_id
+                )
+            else:
+                txn = Expense(
+                    user_id=user_id,
+                    description=rec.description,
+                    amount=rec.amount,
+                    date=rec.next_date,
+                    notes=f'Auto-created from recurring: {rec.description}',
+                    category_id=rec.category_id
+                )
+            db.session.add(txn)
+            created_count += 1
+
+            if rec.frequency == 'weekly':
+                rec.next_date += timedelta(days=7)
+            elif rec.frequency == 'biweekly':
+                rec.next_date += timedelta(days=14)
+            elif rec.frequency == 'monthly':
+                rec.next_date = _add_months(rec.next_date, 1)
+            elif rec.frequency == 'yearly':
+                rec.next_date = _add_months(rec.next_date, 12)
+
+    if created_count > 0:
+        db.session.commit()
+        log_activity(user_id, 'auto-created', 'recurring',
+                    description=f'{created_count} recurring transaction(s) processed')
+
+    return created_count
 
 
 # Routes
@@ -457,6 +608,9 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # Process any due recurring transactions
+    process_recurring_transactions(current_user.id)
+
     stats = get_user_stats(current_user.id)
 
     recent_income = Income.query.filter_by(user_id=current_user.id).order_by(Income.date.desc()).limit(5).all()
@@ -480,6 +634,27 @@ def dashboard():
         db.extract('month', Expense.date) == today.month
     ).scalar() or 0
 
+    # Budget warnings for dashboard
+    budgets = Budget.query.filter_by(user_id=current_user.id, month=today.month, year=today.year).all()
+    budget_warnings = []
+    for budget in budgets:
+        spent = db.session.query(db.func.sum(Expense.amount)).filter(
+            Expense.user_id == current_user.id,
+            Expense.category_id == budget.expense_category_id,
+            db.extract('year', Expense.date) == today.year,
+            db.extract('month', Expense.date) == today.month
+        ).scalar() or 0
+        pct = (spent / budget.monthly_limit * 100) if budget.monthly_limit > 0 else 0
+        if pct >= 70:
+            budget_warnings.append({
+                'category': budget.category,
+                'spent': spent,
+                'limit': budget.monthly_limit,
+                'percentage': min(pct, 100),
+                'raw_percentage': pct,
+                'status': 'danger' if pct >= 100 else 'warning' if pct >= 80 else 'ok'
+            })
+
     return render_template('dashboard.html',
                          stats=stats,
                          recent_income=recent_income,
@@ -488,7 +663,8 @@ def dashboard():
                          bank_count=bank_count,
                          month_income=month_income,
                          month_expenses=month_expenses,
-                         current_month=today.strftime('%B %Y'))
+                         current_month=today.strftime('%B %Y'),
+                         budget_warnings=budget_warnings)
 
 
 # Income routes
@@ -979,6 +1155,655 @@ def calendar_data(year, month):
         'days_in_month': monthrange(year, month)[1],
         'first_day_weekday': date(year, month, 1).weekday()
     })
+
+
+# Chart API
+@app.route('/api/chart/monthly-summary')
+@login_required
+def chart_monthly_summary():
+    """Return income vs expenses for the last 6 months."""
+    today = date.today()
+    months_data = []
+
+    for i in range(5, -1, -1):
+        m = today.month - i
+        y = today.year
+        while m <= 0:
+            m += 12
+            y -= 1
+
+        month_income = db.session.query(db.func.sum(Income.amount)).filter(
+            Income.user_id == current_user.id,
+            db.extract('year', Income.date) == y,
+            db.extract('month', Income.date) == m
+        ).scalar() or 0
+
+        month_expenses = db.session.query(db.func.sum(Expense.amount)).filter(
+            Expense.user_id == current_user.id,
+            db.extract('year', Expense.date) == y,
+            db.extract('month', Expense.date) == m
+        ).scalar() or 0
+
+        month_name = date(y, m, 1).strftime('%b %Y')
+        months_data.append({
+            'month': month_name,
+            'income': round(float(month_income), 2),
+            'expenses': round(float(month_expenses), 2)
+        })
+
+    return jsonify({'months': months_data})
+
+
+# Budget routes
+@app.route('/budgets')
+@login_required
+def budget_list():
+    today = date.today()
+    year = request.args.get('year', today.year, type=int)
+    month = request.args.get('month', today.month, type=int)
+
+    if month > 12:
+        month = 1
+        year += 1
+    elif month < 1:
+        month = 12
+        year -= 1
+
+    categories = ExpenseCategory.query.filter_by(user_id=current_user.id).order_by(ExpenseCategory.name).all()
+    budgets = Budget.query.filter_by(user_id=current_user.id, month=month, year=year).all()
+
+    budget_data = []
+    for budget in budgets:
+        spent = db.session.query(db.func.sum(Expense.amount)).filter(
+            Expense.user_id == current_user.id,
+            Expense.category_id == budget.expense_category_id,
+            db.extract('year', Expense.date) == year,
+            db.extract('month', Expense.date) == month
+        ).scalar() or 0
+
+        percentage = (spent / budget.monthly_limit * 100) if budget.monthly_limit > 0 else 0
+        budget_data.append({
+            'budget': budget,
+            'spent': spent,
+            'remaining': budget.monthly_limit - spent,
+            'percentage': min(percentage, 100),
+            'raw_percentage': percentage,
+            'status': 'danger' if percentage >= 100 else 'warning' if percentage >= 80 else 'ok'
+        })
+
+    # Calculate previous/next month for navigation
+    prev_month = month - 1
+    prev_year = year
+    if prev_month < 1:
+        prev_month = 12
+        prev_year -= 1
+    next_month = month + 1
+    next_year = year
+    if next_month > 12:
+        next_month = 1
+        next_year += 1
+
+    return render_template('budgets.html',
+                         budget_data=budget_data,
+                         categories=categories,
+                         month=month, year=year,
+                         prev_month=prev_month, prev_year=prev_year,
+                         next_month=next_month, next_year=next_year,
+                         month_name=date(year, month, 1).strftime('%B %Y'))
+
+
+@app.route('/budgets/set', methods=['POST'])
+@login_required
+def budget_set():
+    category_id = request.form.get('category_id', type=int)
+    monthly_limit = request.form.get('monthly_limit', type=float)
+    month = request.form.get('month', type=int)
+    year = request.form.get('year', type=int)
+
+    if not all([category_id, monthly_limit, month, year]):
+        flash('All fields are required', 'error')
+        return redirect(url_for('budget_list'))
+
+    category = ExpenseCategory.query.filter_by(id=category_id, user_id=current_user.id).first_or_404()
+
+    budget = Budget.query.filter_by(
+        user_id=current_user.id,
+        expense_category_id=category_id,
+        month=month, year=year
+    ).first()
+
+    if budget:
+        budget.monthly_limit = monthly_limit
+    else:
+        budget = Budget(
+            user_id=current_user.id,
+            expense_category_id=category_id,
+            monthly_limit=monthly_limit,
+            month=month, year=year
+        )
+        db.session.add(budget)
+
+    db.session.commit()
+    log_activity(current_user.id, 'set', 'budget', budget.id,
+                f'Budget: {category.name} = {monthly_limit}', monthly_limit)
+    flash('Budget limit set!', 'success')
+    return redirect(url_for('budget_list', month=month, year=year))
+
+
+@app.route('/budgets/delete/<int:id>', methods=['POST'])
+@login_required
+def budget_delete(id):
+    budget = Budget.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    db.session.delete(budget)
+    db.session.commit()
+    flash('Budget removed!', 'success')
+    return redirect(url_for('budget_list'))
+
+
+# Recurring transaction routes
+@app.route('/recurring')
+@login_required
+def recurring_list():
+    recurring = RecurringTransaction.query.filter_by(user_id=current_user.id).order_by(
+        RecurringTransaction.is_active.desc(),
+        RecurringTransaction.next_date
+    ).all()
+
+    income_cats = {c.id: c for c in IncomeCategory.query.filter_by(user_id=current_user.id).all()}
+    expense_cats = {c.id: c for c in ExpenseCategory.query.filter_by(user_id=current_user.id).all()}
+
+    for rec in recurring:
+        if rec.type == 'income' and rec.category_id:
+            rec.resolved_category = income_cats.get(rec.category_id)
+        elif rec.type == 'expense' and rec.category_id:
+            rec.resolved_category = expense_cats.get(rec.category_id)
+        else:
+            rec.resolved_category = None
+
+    return render_template('recurring.html', recurring=recurring)
+
+
+@app.route('/recurring/add', methods=['GET', 'POST'])
+@login_required
+def recurring_add():
+    income_categories = IncomeCategory.query.filter_by(user_id=current_user.id).order_by(IncomeCategory.name).all()
+    expense_categories = ExpenseCategory.query.filter_by(user_id=current_user.id).order_by(ExpenseCategory.name).all()
+    clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+
+    if request.method == 'POST':
+        txn_type = request.form.get('type')
+        category_id = request.form.get('category_id')
+        client_id = request.form.get('client_id')
+
+        rec = RecurringTransaction(
+            user_id=current_user.id,
+            type=txn_type,
+            amount=float(request.form.get('amount')),
+            description=request.form.get('description'),
+            category_id=int(category_id) if category_id else None,
+            client_id=int(client_id) if client_id and txn_type == 'income' else None,
+            frequency=request.form.get('frequency'),
+            next_date=datetime.strptime(request.form.get('next_date'), '%Y-%m-%d').date(),
+            notes=request.form.get('notes')
+        )
+        db.session.add(rec)
+        db.session.commit()
+
+        log_activity(current_user.id, 'created', 'recurring', rec.id,
+                    f'Recurring: {rec.description}', rec.amount)
+        flash('Recurring transaction created!', 'success')
+        return redirect(url_for('recurring_list'))
+
+    return render_template('recurring_form.html',
+                         income_categories=income_categories,
+                         expense_categories=expense_categories,
+                         clients=clients)
+
+
+@app.route('/recurring/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def recurring_edit(id):
+    rec = RecurringTransaction.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    income_categories = IncomeCategory.query.filter_by(user_id=current_user.id).order_by(IncomeCategory.name).all()
+    expense_categories = ExpenseCategory.query.filter_by(user_id=current_user.id).order_by(ExpenseCategory.name).all()
+    clients = Client.query.filter_by(user_id=current_user.id).order_by(Client.name).all()
+
+    if request.method == 'POST':
+        rec.type = request.form.get('type')
+        rec.amount = float(request.form.get('amount'))
+        rec.description = request.form.get('description')
+        category_id = request.form.get('category_id')
+        client_id = request.form.get('client_id')
+        rec.category_id = int(category_id) if category_id else None
+        rec.client_id = int(client_id) if client_id and rec.type == 'income' else None
+        rec.frequency = request.form.get('frequency')
+        rec.next_date = datetime.strptime(request.form.get('next_date'), '%Y-%m-%d').date()
+        rec.notes = request.form.get('notes')
+        db.session.commit()
+
+        log_activity(current_user.id, 'updated', 'recurring', rec.id,
+                    f'Updated recurring: {rec.description}', rec.amount)
+        flash('Recurring transaction updated!', 'success')
+        return redirect(url_for('recurring_list'))
+
+    return render_template('recurring_form.html', rec=rec,
+                         income_categories=income_categories,
+                         expense_categories=expense_categories,
+                         clients=clients)
+
+
+@app.route('/recurring/toggle/<int:id>', methods=['POST'])
+@login_required
+def recurring_toggle(id):
+    rec = RecurringTransaction.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    rec.is_active = not rec.is_active
+    db.session.commit()
+    status = 'activated' if rec.is_active else 'paused'
+    flash(f'Recurring transaction {status}!', 'success')
+    return redirect(url_for('recurring_list'))
+
+
+@app.route('/recurring/delete/<int:id>', methods=['POST'])
+@login_required
+def recurring_delete(id):
+    rec = RecurringTransaction.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    db.session.delete(rec)
+    db.session.commit()
+    flash('Recurring transaction deleted!', 'success')
+    return redirect(url_for('recurring_list'))
+
+
+# Bulk delete routes
+@app.route('/income/bulk-delete', methods=['POST'])
+@login_required
+def income_bulk_delete():
+    ids = request.form.getlist('selected_ids')
+    if not ids:
+        flash('No items selected', 'error')
+        return redirect(url_for('income_list'))
+    count = 0
+    for id_str in ids:
+        income = Income.query.filter_by(id=int(id_str), user_id=current_user.id).first()
+        if income:
+            if income.image_filename:
+                delete_upload(income.image_filename, 'income')
+            db.session.delete(income)
+            count += 1
+    db.session.commit()
+    log_activity(current_user.id, 'deleted', 'income', description=f'Bulk deleted {count} income(s)')
+    flash(f'{count} income record(s) deleted!', 'success')
+    return redirect(url_for('income_list'))
+
+
+@app.route('/expenses/bulk-delete', methods=['POST'])
+@login_required
+def expense_bulk_delete():
+    ids = request.form.getlist('selected_ids')
+    if not ids:
+        flash('No items selected', 'error')
+        return redirect(url_for('expense_list'))
+    count = 0
+    for id_str in ids:
+        expense = Expense.query.filter_by(id=int(id_str), user_id=current_user.id).first()
+        if expense:
+            if expense.image_filename:
+                delete_upload(expense.image_filename, 'expenses')
+            db.session.delete(expense)
+            count += 1
+    db.session.commit()
+    log_activity(current_user.id, 'deleted', 'expense', description=f'Bulk deleted {count} expense(s)')
+    flash(f'{count} expense record(s) deleted!', 'success')
+    return redirect(url_for('expense_list'))
+
+
+@app.route('/balance/bulk-delete', methods=['POST'])
+@login_required
+def balance_bulk_delete():
+    ids = request.form.getlist('selected_ids')
+    if not ids:
+        flash('No items selected', 'error')
+        return redirect(url_for('balance_list'))
+    count = 0
+    for id_str in ids:
+        account = BankAccount.query.filter_by(id=int(id_str), user_id=current_user.id).first()
+        if account:
+            if account.image_filename:
+                delete_upload(account.image_filename, 'banks')
+            db.session.delete(account)
+            count += 1
+    db.session.commit()
+    log_activity(current_user.id, 'deleted', 'bank_account', description=f'Bulk deleted {count} account(s)')
+    flash(f'{count} bank account(s) deleted!', 'success')
+    return redirect(url_for('balance_list'))
+
+
+# Task routes
+@app.route('/tasks')
+@login_required
+def task_list():
+    filter_type = request.args.get('filter', 'active')
+    query = Task.query.filter_by(user_id=current_user.id)
+
+    if filter_type == 'active':
+        query = query.filter_by(is_completed=False)
+    elif filter_type == 'completed':
+        query = query.filter_by(is_completed=True)
+
+    if filter_type == 'completed':
+        tasks = query.order_by(Task.completed_at.desc()).all()
+    else:
+        tasks = query.order_by(
+            db.case((Task.priority == 'high', 0), (Task.priority == 'medium', 1), (Task.priority == 'low', 2)),
+            Task.due_date.asc().nullslast(),
+            Task.created_at.desc()
+        ).all()
+
+    # Today's stats
+    today = date.today()
+    today_total = Task.query.filter_by(user_id=current_user.id, due_date=today).count()
+    today_done = Task.query.filter_by(user_id=current_user.id, due_date=today, is_completed=True).count()
+
+    # Streak calculation
+    streak = 0
+    check_date = today - timedelta(days=1)
+    while True:
+        day_tasks = Task.query.filter_by(user_id=current_user.id, due_date=check_date).all()
+        if not day_tasks:
+            break
+        if all(t.is_completed for t in day_tasks):
+            streak += 1
+            check_date -= timedelta(days=1)
+        else:
+            break
+
+    return render_template('tasks.html', tasks=tasks, filter_type=filter_type,
+                         today_total=today_total, today_done=today_done, streak=streak)
+
+
+@app.route('/tasks/add', methods=['POST'])
+@login_required
+def task_add():
+    due_date_str = request.form.get('due_date')
+    task = Task(
+        user_id=current_user.id,
+        title=request.form.get('title'),
+        priority=request.form.get('priority', 'medium'),
+        due_date=datetime.strptime(due_date_str, '%Y-%m-%d').date() if due_date_str else None,
+        notes=request.form.get('notes')
+    )
+    db.session.add(task)
+    db.session.commit()
+    flash('Task added!', 'success')
+    return redirect(url_for('task_list'))
+
+
+@app.route('/tasks/toggle/<int:id>', methods=['POST'])
+@login_required
+def task_toggle(id):
+    task = Task.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    task.is_completed = not task.is_completed
+    task.completed_at = datetime.utcnow() if task.is_completed else None
+    db.session.commit()
+    return redirect(url_for('task_list'))
+
+
+@app.route('/tasks/delete/<int:id>', methods=['POST'])
+@login_required
+def task_delete(id):
+    task = Task.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    db.session.delete(task)
+    db.session.commit()
+    flash('Task deleted!', 'success')
+    return redirect(url_for('task_list'))
+
+
+# Note routes
+@app.route('/notes')
+@login_required
+def note_list():
+    notes = Note.query.filter_by(user_id=current_user.id).order_by(
+        Note.is_pinned.desc(), Note.updated_at.desc()
+    ).all()
+    categories = db.session.query(Note.category).filter(
+        Note.user_id == current_user.id, Note.category.isnot(None), Note.category != ''
+    ).distinct().all()
+    categories = [c[0] for c in categories]
+    return render_template('notes.html', notes=notes, categories=categories)
+
+
+@app.route('/notes/add', methods=['GET', 'POST'])
+@login_required
+def note_add():
+    if request.method == 'POST':
+        note = Note(
+            user_id=current_user.id,
+            title=request.form.get('title'),
+            content=request.form.get('content'),
+            category=request.form.get('category') or None
+        )
+        db.session.add(note)
+        db.session.commit()
+        flash('Note saved!', 'success')
+        return redirect(url_for('note_list'))
+    return render_template('note_form.html')
+
+
+@app.route('/notes/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def note_edit(id):
+    note = Note.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    if request.method == 'POST':
+        note.title = request.form.get('title')
+        note.content = request.form.get('content')
+        note.category = request.form.get('category') or None
+        db.session.commit()
+        flash('Note updated!', 'success')
+        return redirect(url_for('note_list'))
+    return render_template('note_form.html', note=note)
+
+
+@app.route('/notes/pin/<int:id>', methods=['POST'])
+@login_required
+def note_pin(id):
+    note = Note.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    note.is_pinned = not note.is_pinned
+    db.session.commit()
+    return redirect(url_for('note_list'))
+
+
+@app.route('/notes/delete/<int:id>', methods=['POST'])
+@login_required
+def note_delete(id):
+    note = Note.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    db.session.delete(note)
+    db.session.commit()
+    flash('Note deleted!', 'success')
+    return redirect(url_for('note_list'))
+
+
+# Habit routes
+@app.route('/habits')
+@login_required
+def habit_list():
+    habits = Habit.query.filter_by(user_id=current_user.id, is_active=True).order_by(Habit.name).all()
+    today = date.today()
+
+    habit_data = []
+    for habit in habits:
+        # Check if done today
+        done_today = HabitLog.query.filter_by(habit_id=habit.id, date=today).first() is not None
+
+        # Calculate streak
+        streak = 0
+        check_date = today if done_today else today - timedelta(days=1)
+        while True:
+            log = HabitLog.query.filter_by(habit_id=habit.id, date=check_date).first()
+            if log:
+                streak += 1
+                check_date -= timedelta(days=1)
+            else:
+                break
+
+        # Last 7 days
+        week_data = []
+        for i in range(6, -1, -1):
+            d = today - timedelta(days=i)
+            done = HabitLog.query.filter_by(habit_id=habit.id, date=d).first() is not None
+            week_data.append({'date': d, 'done': done})
+
+        habit_data.append({
+            'habit': habit,
+            'done_today': done_today,
+            'streak': streak,
+            'week_data': week_data
+        })
+
+    return render_template('habits.html', habit_data=habit_data, today=today)
+
+
+@app.route('/habits/add', methods=['POST'])
+@login_required
+def habit_add():
+    habit = Habit(
+        user_id=current_user.id,
+        name=request.form.get('name'),
+        icon=request.form.get('icon', 'check-circle'),
+        color=request.form.get('color', '#6366f1')
+    )
+    db.session.add(habit)
+    db.session.commit()
+    flash('Habit created!', 'success')
+    return redirect(url_for('habit_list'))
+
+
+@app.route('/habits/toggle/<int:id>', methods=['POST'])
+@login_required
+def habit_toggle(id):
+    habit = Habit.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    today = date.today()
+    existing = HabitLog.query.filter_by(habit_id=habit.id, date=today).first()
+    if existing:
+        db.session.delete(existing)
+    else:
+        log = HabitLog(habit_id=habit.id, date=today)
+        db.session.add(log)
+    db.session.commit()
+    return redirect(url_for('habit_list'))
+
+
+@app.route('/habits/delete/<int:id>', methods=['POST'])
+@login_required
+def habit_delete(id):
+    habit = Habit.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    db.session.delete(habit)
+    db.session.commit()
+    flash('Habit deleted!', 'success')
+    return redirect(url_for('habit_list'))
+
+
+# Goal routes
+@app.route('/goals')
+@login_required
+def goal_list():
+    active_goals = Goal.query.filter_by(user_id=current_user.id, is_completed=False).order_by(Goal.deadline.asc().nullslast()).all()
+    completed_goals = Goal.query.filter_by(user_id=current_user.id, is_completed=True).order_by(Goal.completed_at.desc()).limit(10).all()
+
+    goal_data = []
+    for goal in active_goals:
+        percentage = 0
+        if goal.target_value and goal.target_value > 0:
+            percentage = min((goal.current_value / goal.target_value) * 100, 100)
+        days_left = None
+        if goal.deadline:
+            days_left = (goal.deadline - date.today()).days
+        goal_data.append({
+            'goal': goal,
+            'percentage': percentage,
+            'days_left': days_left
+        })
+
+    return render_template('goals.html', goal_data=goal_data, completed_goals=completed_goals)
+
+
+@app.route('/goals/add', methods=['GET', 'POST'])
+@login_required
+def goal_add():
+    if request.method == 'POST':
+        deadline_str = request.form.get('deadline')
+        target_str = request.form.get('target_value')
+        goal = Goal(
+            user_id=current_user.id,
+            title=request.form.get('title'),
+            description=request.form.get('description'),
+            target_value=float(target_str) if target_str else None,
+            current_value=float(request.form.get('current_value', 0)),
+            unit=request.form.get('unit') or None,
+            deadline=datetime.strptime(deadline_str, '%Y-%m-%d').date() if deadline_str else None,
+            category=request.form.get('category') or None
+        )
+        db.session.add(goal)
+        db.session.commit()
+        flash('Goal created!', 'success')
+        return redirect(url_for('goal_list'))
+    return render_template('goal_form.html')
+
+
+@app.route('/goals/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def goal_edit(id):
+    goal = Goal.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    if request.method == 'POST':
+        deadline_str = request.form.get('deadline')
+        target_str = request.form.get('target_value')
+        goal.title = request.form.get('title')
+        goal.description = request.form.get('description')
+        goal.target_value = float(target_str) if target_str else None
+        goal.current_value = float(request.form.get('current_value', 0))
+        goal.unit = request.form.get('unit') or None
+        goal.deadline = datetime.strptime(deadline_str, '%Y-%m-%d').date() if deadline_str else None
+        goal.category = request.form.get('category') or None
+        db.session.commit()
+        flash('Goal updated!', 'success')
+        return redirect(url_for('goal_list'))
+    return render_template('goal_form.html', goal=goal)
+
+
+@app.route('/goals/update-progress/<int:id>', methods=['POST'])
+@login_required
+def goal_update_progress(id):
+    goal = Goal.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    new_value = request.form.get('current_value', type=float)
+    if new_value is not None:
+        goal.current_value = new_value
+        if goal.target_value and goal.current_value >= goal.target_value:
+            goal.is_completed = True
+            goal.completed_at = datetime.utcnow()
+            flash('Goal completed! Great job!', 'success')
+        else:
+            flash('Progress updated!', 'success')
+        db.session.commit()
+    return redirect(url_for('goal_list'))
+
+
+@app.route('/goals/complete/<int:id>', methods=['POST'])
+@login_required
+def goal_complete(id):
+    goal = Goal.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    goal.is_completed = True
+    goal.completed_at = datetime.utcnow()
+    db.session.commit()
+    flash('Goal completed!', 'success')
+    return redirect(url_for('goal_list'))
+
+
+@app.route('/goals/delete/<int:id>', methods=['POST'])
+@login_required
+def goal_delete(id):
+    goal = Goal.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    db.session.delete(goal)
+    db.session.commit()
+    flash('Goal deleted!', 'success')
+    return redirect(url_for('goal_list'))
 
 
 # Activity log routes

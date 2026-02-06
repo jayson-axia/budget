@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Income - BudgetQuest{% endblock %}
+{% block title %}Income - LifeQuest{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 page-header-flex">
     <h1 class="h4 mb-0 fw-bold"><i class="bi bi-arrow-up-circle me-2" style="color: var(--neon-green);"></i>Income</h1>
     <div class="d-flex gap-2">
         <a href="{{ url_for('income_categories') }}" class="btn btn-outline-game"><i class="bi bi-tag me-1"></i> Categories</a>
@@ -28,56 +28,71 @@
 <div class="game-card">
     <div class="game-card-body p-0">
         {% if incomes %}
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>Source</th>
-                        <th>Category</th>
-                        <th>Client</th>
-                        <th>Date</th>
-                        <th class="text-end">Amount</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for income in incomes %}
-                    <tr>
-                        <td>
-                            <strong>{{ income.source }}</strong>
-                            {% if income.notes %}<br><small class="text-muted">{{ income.notes[:50] }}{% if income.notes|length > 50 %}...{% endif %}</small>{% endif %}
-                        </td>
-                        <td>
-                            {% if income.category %}
-                            <span class="category-pill" style="background: {{ income.category.color }}20; color: {{ income.category.color }};">
-                                <i class="bi bi-{{ income.category.icon }}"></i> {{ income.category.name }}
-                            </span>
-                            {% else %}
-                            <span class="text-muted">-</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if income.client %}
-                            <span class="text-muted"><i class="bi bi-person me-1"></i>{{ income.client.name }}</span>
-                            {% else %}
-                            <span class="text-muted">-</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ income.date.strftime('%b %d, %Y') }}</td>
-                        <td class="text-end">
-                            <span class="amount amount-income">+{{ currency_symbol }}{{ "%.2f"|format(income.amount) }}</span>
-                        </td>
-                        <td class="text-end">
-                            <a href="{{ url_for('income_edit', id=income.id) }}" class="btn btn-sm btn-outline-game me-1"><i class="bi bi-pencil"></i></a>
-                            <form action="{{ url_for('income_delete', id=income.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this income?')">
-                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        <form id="bulkDeleteForm" method="POST" action="{{ url_for('income_bulk_delete') }}" onsubmit="return confirm('Delete selected income records?');">
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content-space-between; align-items: center;">
+                <label class="d-flex align-items-center gap-2" style="cursor: pointer; margin: 0;">
+                    <input type="checkbox" id="selectAll" style="cursor: pointer;">
+                    <span class="text-muted">Select All</span>
+                </label>
+                <button type="submit" class="btn btn-sm btn-outline-danger" id="bulkDeleteBtn" style="display: none;">
+                    <i class="bi bi-trash me-1"></i>Delete Selected
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 table-mobile-cards">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"></th>
+                            <th>Source</th>
+                            <th>Category</th>
+                            <th>Client</th>
+                            <th>Date</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for income in incomes %}
+                        <tr>
+                            <td data-label="">
+                                <input type="checkbox" class="item-checkbox" name="selected_ids" value="{{ income.id }}" style="cursor: pointer;">
+                            </td>
+                            <td data-label="Source">
+                                <strong>{{ income.source }}</strong>
+                                {% if income.notes %}<br><small class="text-muted">{{ income.notes[:50] }}{% if income.notes|length > 50 %}...{% endif %}</small>{% endif %}
+                            </td>
+                            <td data-label="Category">
+                                {% if income.category %}
+                                <span class="category-pill" style="background: {{ income.category.color }}20; color: {{ income.category.color }};">
+                                    <i class="bi bi-{{ income.category.icon }}"></i> {{ income.category.name }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Client">
+                                {% if income.client %}
+                                <span class="text-muted"><i class="bi bi-person me-1"></i>{{ income.client.name }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Date">{{ income.date.strftime('%b %d, %Y') }}</td>
+                            <td data-label="Amount">
+                                <span class="amount amount-income">+{{ currency_symbol }}{{ "%.2f"|format(income.amount) }}</span>
+                            </td>
+                            <td data-label="">
+                                <a href="{{ url_for('income_edit', id=income.id) }}" class="btn btn-sm btn-outline-game me-1"><i class="bi bi-pencil"></i></a>
+                                <form action="{{ url_for('income_delete', id=income.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this income?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
         {% else %}
         <div class="empty-state">
             <i class="bi bi-coin"></i>
@@ -88,4 +103,28 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const selectAll = document.getElementById('selectAll');
+const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+
+selectAll?.addEventListener('change', function() {
+    itemCheckboxes.forEach(cb => cb.checked = this.checked);
+    updateBulkDeleteBtn();
+});
+
+itemCheckboxes.forEach(cb => {
+    cb.addEventListener('change', updateBulkDeleteBtn);
+});
+
+function updateBulkDeleteBtn() {
+    const checked = document.querySelectorAll('.item-checkbox:checked').length;
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.style.display = checked > 0 ? 'block' : 'none';
+    }
+}
+</script>
 {% endblock %}

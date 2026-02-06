@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Habits - LifeQuest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header-flex">
+    <h1 class="h4 mb-0 fw-bold">
+        <i class="bi bi-bar-chart-steps me-2" style="color: var(--neon-green);"></i>Habit Tracker
+    </h1>
+</div>
+
+<!-- Add Habit Form -->
+<div class="game-card mb-4">
+    <div class="game-card-body">
+        <form method="POST" action="{{ url_for('habit_add') }}">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-6">
+                    <input type="text" name="name" class="form-control" placeholder="Habit name (e.g., Exercise, Read)" required>
+                </div>
+                <div class="col-6 col-md-3">
+                    <select name="icon" class="form-select">
+                        <option value="check-circle">✓ Check</option>
+                        <option value="heart">♥ Heart</option>
+                        <option value="water">💧 Water</option>
+                        <option value="book">📖 Book</option>
+                        <option value="trophy">🏆 Trophy</option>
+                        <option value="lightning">⚡ Lightning</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <button type="submit" class="btn btn-game w-100">
+                        <i class="bi bi-plus-lg"></i> Add
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Habit Cards -->
+{% if habit_data %}
+<div class="row g-3">
+    {% for item in habit_data %}
+    <div class="col-12 col-lg-6">
+        <div class="game-card">
+            <div class="game-card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-{{ item.habit.icon }}" style="font-size: 1.5rem; color: {{ item.habit.color }};"></i>
+                        <strong>{{ item.habit.name }}</strong>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge" style="background: linear-gradient(135deg, var(--gold), #ff8c00); color: #000; font-size: 0.9rem; padding: 0.35rem 0.75rem;">
+                            <i class="bi bi-fire me-1"></i>{{ item.streak }} day{{ 's' if item.streak != 1 else '' }}
+                        </span>
+                        <form action="{{ url_for('habit_delete', id=item.habit.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this habit?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Week Grid -->
+                <div class="d-flex justify-content-between mb-2">
+                    {% for day in item.week_data %}
+                    <div class="text-center" style="flex: 1;">
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">{{ day.date.strftime('%a')[0] }}</small>
+                        <div style="width: 100%; aspect-ratio: 1; border-radius: 6px; margin-top: 4px;
+                            {% if day.done %}background: {{ item.habit.color }}; box-shadow: 0 0 8px {{ item.habit.color }}80;
+                            {% else %}border: 2px solid var(--border-color);{% endif %}">
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Check Today Button -->
+                <form action="{{ url_for('habit_toggle', id=item.habit.id) }}" method="POST">
+                    <button type="submit" class="btn w-100 {% if item.done_today %}btn-outline-game{% else %}btn-game{% endif %}" style="{% if item.done_today %}border-color: {{ item.habit.color }}; color: {{ item.habit.color }};{% else %}background: linear-gradient(135deg, {{ item.habit.color }}, {{ item.habit.color }}cc);{% endif %}">
+                        <i class="bi bi-{% if item.done_today %}check-circle-fill{% else %}circle{% endif %} me-1"></i>
+                        {% if item.done_today %}Completed Today{% else %}Mark as Done{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="game-card">
+    <div class="empty-state">
+        <i class="bi bi-bar-chart-steps"></i>
+        <p class="text-muted mt-3">No habits to track yet</p>
+        <p class="text-muted small">Build consistency by tracking daily habits!</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

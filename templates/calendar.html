@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Calendar - BudgetQuest{% endblock %}
+{% block title %}Calendar - LifeQuest{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -113,7 +113,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 page-header-flex">
     <h1 class="h4 mb-0 fw-bold"><i class="bi bi-calendar3 me-2" style="color: var(--neon-purple);"></i>Calendar</h1>
     <div class="month-nav">
         <a href="{{ url_for('calendar_view', year=year, month=month-1) }}" class="btn btn-outline-game btn-sm">
